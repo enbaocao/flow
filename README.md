@@ -23,16 +23,53 @@ Flow scores each word by masking its subword span and measuring RoBERTa's surpri
 
 ## 🚀 Installation
 
+### Option 1: Using uv (Recommended - Fast!)
+
 ```bash
 # Clone the repository
 git clone <your-repo-url>
 cd flow
+
+# Create virtual environment with uv
+uv venv venv
+
+# Activate and install dependencies
+source venv/bin/activate
+uv pip install -r requirements.txt
+
+# Install spaCy model
+uv pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+
+# Test installation
+python test_basic.py
+```
+
+### Option 2: Using pip
+
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd flow
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Download spaCy model
 python -m spacy download en_core_web_sm
+
+# Test installation
+python test_basic.py
+```
+
+### Quick Start Script
+
+```bash
+# Use the activation helper
+source activate.sh
 ```
 
 ## 📖 Usage
@@ -40,8 +77,14 @@ python -m spacy download en_core_web_sm
 ### Command Line Interface
 
 ```bash
-# Basic usage
-python flow.py "The utilize of technology is becoming more prevalent."
+# Basic usage - shows top 5 candidates for each word (default behavior)
+python flow.py "Thank you for your attention to this matter"
+
+# Apply edits automatically instead of showing candidates
+python flow.py "Your text" --apply-edits
+
+# Show more or fewer candidates
+python flow.py "Your text" --show-candidates 10
 
 # Interactive mode (confirm each edit)
 python flow.py "Your text here" --interactive
@@ -57,6 +100,25 @@ python flow.py "Your text" --use-nli
 
 # Process file
 python flow.py --file input.txt --output refined.txt
+```
+
+### Understanding the Output
+
+By default, Flow shows the **top 5 candidate replacements** for each word with:
+- **Entropy** (H): How uncertain RoBERTa is about this position (higher = more "clunky")
+- **Rank**: Where the original word ranks in RoBERTa's predictions
+- **ΔLL** (Delta Log-Likelihood): Fluency improvement (positive = better, negative = worse)
+- **sim**: Semantic similarity with original sentence (0-1, higher = more similar)
+- **p**: Log probability of the candidate in masked position
+- **✓**: Indicates candidate passes both fluency (ΔLL ≥ threshold) and similarity (sim ≥ threshold) checks
+
+Example output:
+```
+📝 'utilize'
+   Entropy: 5.60 bits | Rank: #8131 | Log-prob: -16.83
+   Top replacements:
+   ✓ 1. adoption       → ΔLL= +7.87 | sim=0.962 | p= -1.34
+     2. use            → ΔLL= -2.10 | sim=0.924 | p= -2.76
 ```
 
 ### Python API

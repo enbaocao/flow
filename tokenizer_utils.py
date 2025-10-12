@@ -29,8 +29,7 @@ class TokenizerAligner:
         """
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_name,
-            use_fast=True,
-            add_prefix_space=True  # RoBERTa needs this for proper tokenization
+            use_fast=True
         )
         self.mask_token_id = self.tokenizer.mask_token_id
         self.mask_token = self.tokenizer.mask_token
@@ -150,11 +149,9 @@ class TokenizerAligner:
         Returns:
             Token IDs (excluding special tokens)
         """
-        # Add space prefix for RoBERTa
         encoding = self.tokenizer(
             word,
-            add_special_tokens=False,
-            add_prefix_space=True
+            add_special_tokens=False
         )
         return encoding['input_ids']
     
@@ -175,8 +172,14 @@ class TokenizerAligner:
         Returns:
             Tuple of (reconstructed text, reconstructed token IDs)
         """
-        # Encode the replacement
-        replacement_ids = self.encode_word(replacement_text)
+        # Encode the replacement with a space prefix for RoBERTa
+        # Try encoding with space first, then without if that fails
+        replacement_with_space = " " + replacement_text
+        encoding_with_space = self.tokenizer(
+            replacement_with_space,
+            add_special_tokens=False
+        )
+        replacement_ids = encoding_with_space['input_ids']
         
         # Build new token sequence
         new_ids = (

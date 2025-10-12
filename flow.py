@@ -140,6 +140,20 @@ Examples:
         help="Show detailed scoring information"
     )
     
+    parser.add_argument(
+        "--show-candidates",
+        type=int,
+        default=5,
+        metavar="N",
+        help="Show top N candidate replacements for each word (default: 5, use 0 to disable and apply edits)"
+    )
+    
+    parser.add_argument(
+        "--apply-edits",
+        action="store_true",
+        help="Apply edits instead of just showing candidates (overrides --show-candidates)"
+    )
+    
     args = parser.parse_args()
     
     # Get input text
@@ -196,19 +210,24 @@ Examples:
     print()
     
     try:
-        refined_text = pipeline.refine_text(text, interactive=args.interactive)
+        if args.apply_edits or args.interactive or args.show_candidates == 0:
+            # Normal refinement mode (apply edits)
+            refined_text = pipeline.refine_text(text, interactive=args.interactive)
+            
+            # Output results
+            print(f"\n{'='*70}")
+            print("REFINED TEXT:")
+            print(f"{'='*70}")
+            print(refined_text)
+            print()
+        else:
+            # Show candidates mode (default)
+            pipeline.show_candidates_for_text(text, top_n=args.show_candidates)
     except Exception as e:
         print(f"Error refining text: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
         return 1
-    
-    # Output results
-    print(f"\n{'='*70}")
-    print("REFINED TEXT:")
-    print(f"{'='*70}")
-    print(refined_text)
-    print()
     
     # Write to file if requested
     if args.output:

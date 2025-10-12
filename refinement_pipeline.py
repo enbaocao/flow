@@ -100,7 +100,7 @@ class RefinementPipeline:
             sentence,
             words,
             min_entropy=self.config.min_entropy,
-            max_original_rank=self.config.max_original_rank
+            max_rank=self.config.max_original_rank
         )
         
         # Step 3: Identify clunky words
@@ -441,4 +441,146 @@ class RefinementPipeline:
         # Simple sentence splitter (can be improved with spaCy sentencizer)
         doc = self.constraints.nlp(text)
         return [sent.text.strip() for sent in doc.sents]
+    
+    def show_candidates_for_text(self, text: str, top_n: int = 5):
+        """
+        Show top N sentence-level modifications ranked by quality.
+        
+        Args:
+            text: Text to analyze
+            top_n: Number of top modifications to show for the entire sentence
+        """
+        sentences = self._split_sentences(text)
+        
+        for sent_idx, sentence in enumerate(sentences, 1):
+            if len(sentences) > 1:
+                print(f"\n{'='*70}")
+                print(f"Sentence {sent_idx}:")
+                print(f"{'='*70}")
+                print(f"{sentence}\n")
+            
+            # Extract words
+            words = self.constraints.extract_words(sentence)
+            
+            # Score all words
+            scores = self.scorer.score_sentence(
+                sentence,
+                words,
+                min_entropy=0.0,  # Score all words
+                max_rank=100000
+            )
+            
+            # Get alignments and encoding
+            alignments = self.aligner.align_words_to_tokens(sentence, words)
+            encoding = self.aligner.tokenizer(sentence, add_special_tokens=True)
+            input_ids = encoding['input_ids']
+            
+            # Collect all possible modifications with their scores
+            all_modifications = []
+            
+            for score, alignment in zip(scores, alignments):
+                # Skip punctuation
+                if score.word_text in ['.', ',', '!', '?', ';', ':', '"', "'", '(', ')']:
+                    continue
+                
+                # Generate candidates
+                candidates = self.generator.generate_candidates(
+                    input_ids,
+                    alignment,
+                    score.word_text
+                )
+                
+                if not candidates:
+                    continue
+                
+                # Filter by linguistic constraints
+                candidate_texts = [c.text for c in candidates]
+                filtered_texts = self.constraints.filter_candidates(
+                    score.word_text,
+                    candidate_texts,
+                    sentence,
+                    strict=True
+                )
+                
+                filtered_candidates = [
+                    c for c in candidates if c.text in filtered_texts
+                ]
+                
+                # Evaluate each candidate
+                for candidate in filtered_candidates[:10]:  # Consider top 10 per word
+                    # Reconstruct sentence
+                    new_text, new_ids = self.aligner.reconstruct_sentence(
+                        input_ids,
+                        candidate.text,
+                        alignment
+                    )
+                    
+                    # Compute metrics
+                    original_pll = self.scorer.compute_windowed_pll(
+                        input_ids,
+                        alignment.token_start,
+                        window_size=self.config.pll_window_size
+                    )
+                    
+                    new_pll = self.scorer.compute_windowed_pll(
+                        new_ids,
+                        alignment.token_start,
+                        window_size=self.config.pll_window_size
+                    )
+                    
+                    pll_gain = new_pll - original_pll
+                    
+                    similarity = self.semantic_checker.compute_similarity(
+                        sentence,
+                        new_text
+                    )
+                    
+                    # Compute composite quality score
+                    # Prioritize: high entropy words, positive PLL gain, high similarity
+                    quality_score = (
+                        score.entropy * 0.3 +           # Prioritize fixing "clunky" words
+                        pll_gain * 2.0 +                 # Fluency improvement (most important)
+                        similarity * 10.0 +              # Semantic preservation
+                        candidate.log_prob * 0.1         # Candidate probability
+                    )
+                    
+                    all_modifications.append({
+                        'original_word': score.word_text,
+                        'replacement': candidate.text,
+                        'new_text': new_text,
+                        'entropy': score.entropy,
+                        'rank': score.rank,
+                        'pll_gain': pll_gain,
+                        'similarity': similarity,
+                        'candidate_logprob': candidate.log_prob,
+                        'quality_score': quality_score,
+                        'passes_thresholds': (
+                            pll_gain >= self.config.min_pll_gain and 
+                            similarity >= self.config.min_sbert_cosine
+                        )
+                    })
+            
+            # Sort by quality score (descending)
+            all_modifications.sort(key=lambda x: x['quality_score'], reverse=True)
+            
+            # Display results
+            print(f"{'─'*70}")
+            print(f"Top {top_n} most promising modifications:")
+            print(f"{'─'*70}")
+            print(f"Legend: ✓ = passes thresholds (ΔLL ≥ {self.config.min_pll_gain:.1f}, sim ≥ {self.config.min_sbert_cosine:.2f})")
+            print(f"{'─'*70}\n")
+            
+            if not all_modifications:
+                print("No linguistically compatible modifications found.\n")
+                continue
+            
+            # Show top N modifications
+            for i, mod in enumerate(all_modifications[:top_n], 1):
+                status = "✓" if mod['passes_thresholds'] else " "
+                
+                print(f"{status} {i}. '{mod['original_word']}' → '{mod['replacement']}'")
+                print(f"   Modified: {mod['new_text']}")
+                print(f"   Quality: {mod['quality_score']:6.2f} | ΔLL: {mod['pll_gain']:+6.2f} | sim: {mod['similarity']:.3f}")
+                print(f"   Original entropy: {mod['entropy']:.2f} bits | rank: #{mod['rank']}")
+                print()
 
