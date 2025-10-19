@@ -35,15 +35,15 @@ function WordTooltip({ word }: WordTooltipProps) {
   };
 
   return (
-    <div 
-      className="absolute w-80 bg-white p-6 mt-3 left-0 shadow-xl"
-      style={{ 
-        maxWidth: 'calc(100vw - 2rem)',
-        border: '1px solid #e0e0e0',
-        zIndex: 100
-      }}
-    >
-      <div className="space-y-4">
+            <div 
+              className="absolute w-80 bg-white p-4 mt-3 left-0 shadow-xl"
+              style={{ 
+                maxWidth: 'calc(100vw - 2rem)',
+                border: '1px solid #e0e0e0',
+                zIndex: 100
+              }}
+            >
+              <div className="space-y-3">
         {/* Word with context */}
         <div>
           <div className="font-normal text-[13px] tracking-wide mb-2" style={{ color: '#1a1a1a' }}>
@@ -56,14 +56,14 @@ function WordTooltip({ word }: WordTooltipProps) {
         
         {/* Suggestions with detailed metrics */}
         {word.suggestions.length > 0 && (
-          <div className="space-y-3 border-t pt-4" style={{ borderColor: '#e8e8e8' }}>
+          <div className="space-y-1 border-t pt-2" style={{ borderColor: '#e8e8e8' }}>
             {word.suggestions.map((suggestion, idx) => (
               <div 
                 key={idx} 
-                className="group pb-3 border-b last:border-b-0"
+                className="group pb-1 border-b last:border-b-0"
                 style={{ borderColor: '#f0f0f0' }}
               >
-                <div className="flex items-baseline justify-between mb-2">
+                <div className="flex items-baseline justify-between mb-1">
                   <span className="font-normal text-[14px]" style={{ color: '#1a1a1a' }}>
                     {suggestion.text}
                   </span>
@@ -78,34 +78,34 @@ function WordTooltip({ word }: WordTooltipProps) {
                   </span>
                 </div>
                 
-                {/* Metrics */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="font-light" style={{ color: '#999' }}>Fluency gain</span>
-                    <span 
-                      className="font-normal"
-                      style={{ 
-                        color: suggestion.pll_gain >= 1.5 ? '#1a1a1a' : '#999'
-                      }}
-                    >
-                      {suggestion.pll_gain >= 0 ? '+' : ''}{suggestion.pll_gain.toFixed(1)}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-[10px]">
-                    <span className="font-light" style={{ color: '#999' }}>Meaning preserved</span>
-                    <span 
-                      className="font-normal"
-                      style={{ 
-                        color: suggestion.similarity >= 0.95 ? '#1a1a1a' : '#999'
-                      }}
-                    >
-                      {(suggestion.similarity * 100).toFixed(1)}%
-                    </span>
-                  </div>
-                </div>
+                        {/* Metrics */}
+                        <div className="space-y-0.5">
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-light" style={{ color: '#999' }}>Fluency gain</span>
+                            <span 
+                              className="font-normal"
+                              style={{ 
+                                color: suggestion.pll_gain >= 1.5 ? '#1a1a1a' : '#999'
+                              }}
+                            >
+                              {suggestion.pll_gain >= 0 ? '+' : ''}{suggestion.pll_gain.toFixed(1)}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-light" style={{ color: '#999' }}>Meaning preserved</span>
+                            <span 
+                              className="font-normal"
+                              style={{ 
+                                color: suggestion.similarity >= 0.95 ? '#1a1a1a' : '#999'
+                              }}
+                            >
+                              {(suggestion.similarity * 100).toFixed(1)}%
+                            </span>
+                          </div>
+                        </div>
 
-                {/* Reason */}
-                <div className="mt-2 text-[10px] font-light italic" style={{ color: '#666' }}>
+                        {/* Reason */}
+                        <div className="mt-1 text-[10px] font-light italic" style={{ color: '#666' }}>
                   {getReasonText(suggestion)}
                 </div>
               </div>
