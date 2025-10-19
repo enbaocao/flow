@@ -442,6 +442,163 @@ class RefinementPipeline:
         doc = self.constraints.nlp(text)
         return [sent.text.strip() for sent in doc.sents]
     
+    def highlight_clunky_words(self, text: str, show_top_replacements: int = 3):
+        """
+        Highlight words that are most likely to need editing based on entropy and rank.
+        
+        This provides a quick overview of which parts of the text might benefit from revision,
+        showing the key metrics and top replacement suggestions without applying edits.
+        
+        Args:
+            text: Text to analyze
+            show_top_replacements: Number of top replacement suggestions to show per word
+        """
+        sentences = self._split_sentences(text)
+        
+        print(f"\n{'='*70}")
+        print("HIGHLIGHTED TEXT ANALYSIS")
+        print(f"{'='*70}")
+        print(f"Original text:")
+        print(f"{text}")
+        print(f"\n{'='*70}")
+        print("Words likely to need editing:")
+        print(f"{'='*70}\n")
+        
+        total_highlighted = 0
+        
+        for sent_idx, sentence in enumerate(sentences, 1):
+            # Extract words
+            words = self.constraints.extract_words(sentence)
+            
+            # Score all words
+            scores = self.scorer.score_sentence(
+                sentence,
+                words,
+                min_entropy=0.0,  # Score all words initially
+                max_rank=100000
+            )
+            
+            # Filter to show only words that meet "clunky" criteria
+            clunky_scores = [
+                s for s in scores 
+                if (s.entropy >= self.config.min_entropy or s.rank >= self.config.max_original_rank)
+                and s.word_text not in ['.', ',', '!', '?', ';', ':', '"', "'", '(', ')']
+            ]
+            
+            if not clunky_scores:
+                if len(sentences) > 1:
+                    print(f"Sentence {sent_idx}: ✓ No issues detected\n")
+                continue
+            
+            total_highlighted += len(clunky_scores)
+            
+            if len(sentences) > 1:
+                print(f"{'─'*70}")
+                print(f"Sentence {sent_idx}:")
+                print(f"{'─'*70}")
+            
+            # Get alignments and encoding for this sentence
+            alignments = self.aligner.align_words_to_tokens(sentence, words)
+            encoding = self.aligner.tokenizer(sentence, add_special_tokens=True)
+            input_ids = encoding['input_ids']
+            
+            # Show each clunky word
+            for score in clunky_scores:
+                # Find alignment
+                alignment = next((a for a in alignments if a.word_idx == score.word_idx), None)
+                if not alignment:
+                    continue
+                
+                # Show word and scores
+                print(f"📝 '{score.word_text}'")
+                print(f"   Entropy: {score.entropy:.2f} bits | Rank: #{score.rank} | Log-prob: {score.log_prob:.2f}")
+                
+                # Determine why it's flagged
+                flags = []
+                if score.entropy >= self.config.min_entropy:
+                    flags.append(f"high uncertainty (H≥{self.config.min_entropy})")
+                if score.rank >= self.config.max_original_rank:
+                    flags.append(f"low rank (rank≥{self.config.max_original_rank})")
+                if flags:
+                    print(f"   Flagged: {', '.join(flags)}")
+                
+                # Generate and show top replacements if requested
+                if show_top_replacements > 0:
+                    candidates = self.generator.generate_candidates(
+                        input_ids,
+                        alignment,
+                        score.word_text
+                    )
+                    
+                    if candidates:
+                        # Filter by linguistic constraints
+                        candidate_texts = [c.text for c in candidates]
+                        filtered_texts = self.constraints.filter_candidates(
+                            score.word_text,
+                            candidate_texts,
+                            sentence,
+                            strict=True
+                        )
+                        
+                        filtered_candidates = [
+                            c for c in candidates if c.text in filtered_texts
+                        ]
+                        
+                        if filtered_candidates:
+                            print(f"   Top replacements:")
+                            for i, cand in enumerate(filtered_candidates[:show_top_replacements], 1):
+                                # Quick PLL check
+                                new_text, new_ids = self.aligner.reconstruct_sentence(
+                                    input_ids,
+                                    cand.text,
+                                    alignment
+                                )
+                                
+                                original_pll = self.scorer.compute_windowed_pll(
+                                    input_ids,
+                                    alignment.token_start,
+                                    window_size=self.config.pll_window_size
+                                )
+                                
+                                new_pll = self.scorer.compute_windowed_pll(
+                                    new_ids,
+                                    alignment.token_start,
+                                    window_size=self.config.pll_window_size
+                                )
+                                
+                                pll_gain = new_pll - original_pll
+                                
+                                similarity = self.semantic_checker.compute_similarity(
+                                    sentence,
+                                    new_text
+                                )
+                                
+                                # Check if passes thresholds
+                                passes = (
+                                    pll_gain >= self.config.min_pll_gain and 
+                                    similarity >= self.config.min_sbert_cosine
+                                )
+                                status = "✓" if passes else " "
+                                
+                                print(f"   {status} {i}. {cand.text:15} → ΔLL= {pll_gain:+6.2f} | sim={similarity:.3f} | p= {cand.log_prob:6.2f}")
+                
+                print()  # Blank line between words
+        
+        # Summary
+        print(f"{'='*70}")
+        if total_highlighted == 0:
+            print("✓ No issues detected in the text!")
+        else:
+            print(f"Summary: {total_highlighted} word(s) highlighted across {len(sentences)} sentence(s)")
+            print(f"\nLegend:")
+            print(f"  • Entropy (H): Higher = more uncertain (threshold: {self.config.min_entropy:.1f} bits)")
+            print(f"  • Rank: Position in probability distribution (threshold: {self.config.max_original_rank})")
+            print(f"  • ΔLL: Change in log-likelihood (fluency gain, threshold: {self.config.min_pll_gain:.1f})")
+            print(f"  • sim: Semantic similarity (threshold: {self.config.min_sbert_cosine:.2f})")
+            print(f"  • p: Log probability of replacement candidate")
+            print(f"  • ✓: Candidate passes all thresholds")
+        print(f"{'='*70}\n")
+    
     def show_candidates_for_text(self, text: str, top_n: int = 5):
         """
         Show top N sentence-level modifications ranked by quality.

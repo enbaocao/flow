@@ -20,20 +20,26 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Refine text from command line
-  python flow.py "The utilize of technology is becoming more prevalent."
+  # Highlight mode - identify words that need editing
+  python flow.py "The utilize of technology is becoming more prevalent." --highlight
+  
+  # Refine text from command line (apply edits)
+  python flow.py "The utilize of technology is becoming more prevalent." --apply-edits
   
   # Interactive mode with confirmation prompts
   python flow.py "Your text here" --interactive
   
+  # Show more replacement suggestions in highlight mode
+  python flow.py "Your text" --highlight --highlight-suggestions 5
+  
   # Use smaller/faster model
-  python flow.py "Your text" --model roberta-base
+  python flow.py "Your text" --model roberta-base --highlight
   
   # Adjust thresholds
-  python flow.py "Your text" --min-entropy 3.5 --min-pll-gain 1.0
+  python flow.py "Your text" --min-entropy 3.5 --min-pll-gain 1.0 --highlight
   
   # Enable NLI entailment checking
-  python flow.py "Your text" --use-nli
+  python flow.py "Your text" --use-nli --highlight
         """
     )
     
@@ -154,6 +160,20 @@ Examples:
         help="Apply edits instead of just showing candidates (overrides --show-candidates)"
     )
     
+    parser.add_argument(
+        "--highlight",
+        action="store_true",
+        help="Highlight mode: show words most likely to need editing with top replacement suggestions"
+    )
+    
+    parser.add_argument(
+        "--highlight-suggestions",
+        type=int,
+        default=3,
+        metavar="N",
+        help="Number of replacement suggestions to show per highlighted word in highlight mode (default: 3)"
+    )
+    
     args = parser.parse_args()
     
     # Get input text
@@ -203,14 +223,18 @@ Examples:
         return 1
     
     # Process text
-    print(f"\n{'='*70}")
-    print("ORIGINAL TEXT:")
-    print(f"{'='*70}")
-    print(text)
-    print()
+    if not args.highlight:
+        print(f"\n{'='*70}")
+        print("ORIGINAL TEXT:")
+        print(f"{'='*70}")
+        print(text)
+        print()
     
     try:
-        if args.apply_edits or args.interactive or args.show_candidates == 0:
+        if args.highlight:
+            # Highlight mode - show words that need editing
+            pipeline.highlight_clunky_words(text, show_top_replacements=args.highlight_suggestions)
+        elif args.apply_edits or args.interactive or args.show_candidates == 0:
             # Normal refinement mode (apply edits)
             refined_text = pipeline.refine_text(text, interactive=args.interactive)
             

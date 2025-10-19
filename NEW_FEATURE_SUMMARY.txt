@@ -1,0 +1,187 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                     ✨ NEW HIGHLIGHT MODE IMPLEMENTED ✨                   ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+WHAT YOU ASKED FOR:
+═══════════════════════════════════════════════════════════════════════════
+"I copy and paste in a paragraph, and it tells me (highlights) places that 
+are most likely to need an edit (ie the probabilities for alternate 
+words/phrases are particularly high)"
+
+WHAT WAS BUILT:
+═══════════════════════════════════════════════════════════════════════════
+✓ A new "Highlight Mode" that identifies words needing editing
+✓ Shows probability metrics and why each word is flagged
+✓ Provides top replacement suggestions with quality indicators
+✓ Simple copy-paste workflow
+✓ No automatic changes - just highlights problematic words
+✓ Fast analysis with clear visual output
+
+HOW TO USE IT:
+═══════════════════════════════════════════════════════════════════════════
+
+1. SIMPLEST METHOD:
+   
+   python flow.py "Your paragraph here" --highlight
+
+2. ALTERNATIVE (Dedicated Script):
+   
+   python highlight.py "Your paragraph here"
+
+3. FROM A FILE:
+   
+   python flow.py --file document.txt --highlight
+
+EXAMPLE OUTPUT:
+═══════════════════════════════════════════════════════════════════════════
+
+Input: "The utilize of technology is becoming more prevalent."
+
+Output:
+
+  ======================================================================
+  HIGHLIGHTED TEXT ANALYSIS
+  ======================================================================
+  Original text:
+  The utilize of technology is becoming more prevalent.
+
+  ======================================================================
+  Words likely to need editing:
+  ======================================================================
+
+  📝 'utilize'
+     Entropy: 5.60 bits | Rank: #8131 | Log-prob: -16.83
+     Flagged: high uncertainty (H≥4.0), low rank (rank≥50)
+     Top replacements:
+     ✓ 1. use            → ΔLL= +5.20 | sim=0.967 | p= -1.20
+     ✓ 2. adoption       → ΔLL= +3.40 | sim=0.952 | p= -2.10
+       3. implementation → ΔLL= +0.80 | sim=0.948 | p= -3.50
+
+  ======================================================================
+  Summary: 1 word(s) highlighted across 1 sentence(s)
+
+  Legend:
+    • Entropy (H): Higher = more uncertain (threshold: 4.0 bits)
+    • Rank: Position in probability distribution (threshold: 50)
+    • ΔLL: Change in log-likelihood (fluency gain, threshold: 1.5)
+    • sim: Semantic similarity (threshold: 0.95)
+    • p: Log probability of replacement candidate
+    • ✓: Candidate passes all thresholds
+  ======================================================================
+
+WHAT THE SYMBOLS MEAN:
+═══════════════════════════════════════════════════════════════════════════
+
+📝 = Word is flagged as potentially needing editing
+
+✓ = Replacement passes all quality checks (safe to use!)
+
+Entropy = How "surprised" the model is by this word
+  - Higher values = more awkward/unusual word choice
+  - Threshold: 4.0 bits (configurable)
+
+Rank = Position in probability distribution
+  - Higher rank = less expected word
+  - Threshold: Top 50 (configurable)
+
+ΔLL (Delta Log-Likelihood) = Fluency improvement
+  - Positive values = makes sentence flow better
+  - Higher = more improvement
+  - Threshold: +1.5 (configurable)
+
+sim (Similarity) = Semantic preservation
+  - Close to 1.0 = meaning preserved
+  - Threshold: 0.95 (configurable)
+
+CUSTOMIZATION OPTIONS:
+═══════════════════════════════════════════════════════════════════════════
+
+Show more suggestions per word:
+  --highlight-suggestions 5
+
+More sensitive (catch more issues):
+  --min-entropy 3.5
+
+Less sensitive (only obvious issues):
+  --min-entropy 5.0
+
+Faster analysis:
+  --model roberta-base
+
+More accurate analysis:
+  --model roberta-large
+
+WHAT WAS ADDED TO YOUR CODEBASE:
+═══════════════════════════════════════════════════════════════════════════
+
+Modified Files:
+  • refinement_pipeline.py - Added highlight_clunky_words() method
+  • flow.py - Added --highlight CLI option
+  • README.md - Added Highlight Mode documentation
+
+New Files:
+  • highlight.py - Standalone script for quick highlighting
+  • demo_highlight.py - Interactive demo
+  • test_highlight.py - Test suite
+  • QUICKSTART.md - Quick start guide
+  • HIGHLIGHT_GUIDE.md - Detailed highlight mode guide
+  • USAGE_EXAMPLES.md - Comprehensive usage examples
+  • HOW_TO_USE_HIGHLIGHT.txt - Simple usage instructions
+  • IMPLEMENTATION_SUMMARY.md - Technical documentation
+  • This file!
+
+WORKFLOW:
+═══════════════════════════════════════════════════════════════════════════
+
+  1. Copy your paragraph
+     ↓
+  2. python flow.py "paste here" --highlight
+     ↓
+  3. Review highlighted words (look for ✓ marks)
+     ↓
+  4. Manually edit based on suggestions
+     ↓
+  5. Done!
+
+QUICK TIPS:
+═══════════════════════════════════════════════════════════════════════════
+
+✓ Trust suggestions with ✓ marks - they pass all quality checks
+✓ High ΔLL (+3 or more) = significant improvement
+✓ Use roberta-base for speed, roberta-large for accuracy
+✓ If nothing is highlighted, your text is already good!
+✓ You always have final control - it only suggests
+
+NEXT STEPS:
+═══════════════════════════════════════════════════════════════════════════
+
+Try it now:
+  1. python flow.py "The utilize of technology is important." --highlight
+
+Run the demo:
+  2. python demo_highlight.py
+
+Run tests:
+  3. python test_highlight.py
+
+Read the guides:
+  4. Open HOW_TO_USE_HIGHLIGHT.txt
+  5. Open QUICKSTART.md
+  6. Open HIGHLIGHT_GUIDE.md
+
+HELP & DOCUMENTATION:
+═══════════════════════════════════════════════════════════════════════════
+
+• HOW_TO_USE_HIGHLIGHT.txt - Simple usage guide (START HERE!)
+• QUICKSTART.md - Quick reference for all modes
+• HIGHLIGHT_GUIDE.md - Detailed guide with examples
+• USAGE_EXAMPLES.md - Real-world usage patterns
+• README.md - Full documentation
+• python flow.py --help - Command-line help
+
+═══════════════════════════════════════════════════════════════════════════
+
+                   🎉 READY TO USE! HAPPY WRITING! 🎉
+
+═══════════════════════════════════════════════════════════════════════════
+

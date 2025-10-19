@@ -1,0 +1,137 @@
+================================================================================
+  FLOW HIGHLIGHT MODE - COPY & PASTE WORKFLOW
+================================================================================
+
+WHAT YOU WANTED:
+Copy and paste in a paragraph, and it tells you (highlights) places that are 
+most likely to need an edit (where probabilities for alternate words/phrases 
+are particularly high).
+
+HOW TO USE IT:
+================================================================================
+
+METHOD 1: Quick Command (Recommended)
+--------------------------------------
+python flow.py "Your paragraph here" --highlight
+
+
+METHOD 2: Using Standalone Script
+----------------------------------
+python highlight.py "Your paragraph here"
+
+
+METHOD 3: From a File
+---------------------
+python flow.py --file document.txt --highlight
+
+
+EXAMPLE:
+================================================================================
+
+$ python flow.py "The utilize of advanced technology has revolutionized the way we communicate." --highlight
+
+Output:
+------
+📝 'utilize'
+   Entropy: 5.60 bits | Rank: #8131 | Log-prob: -16.83
+   Flagged: high uncertainty (H≥4.0), low rank (rank≥50)
+   Top replacements:
+   ✓ 1. use            → ΔLL= +5.20 | sim=0.967 | p= -1.20
+   ✓ 2. adoption       → ΔLL= +3.40 | sim=0.952 | p= -2.10
+     3. implementation → ΔLL= +0.80 | sim=0.948 | p= -3.50
+
+Summary: 1 word(s) highlighted across 1 sentence(s)
+
+
+WHAT THE OUTPUT MEANS:
+================================================================================
+
+📝 'utilize'               <- This word is flagged as needing editing
+   Entropy: 5.60 bits     <- High uncertainty (awkward choice)
+   Rank: #8131            <- Very low probability word
+   
+   ✓ 1. use               <- ✓ means this passes all quality checks
+      ΔLL= +5.20          <- Makes sentence more fluent (+5.20 improvement)
+      sim=0.967           <- Preserves meaning (96.7% similar)
+
+
+CUSTOMIZATION:
+================================================================================
+
+Show more suggestions per word:
+   python flow.py "text" --highlight --highlight-suggestions 5
+
+More sensitive (catch more issues):
+   python flow.py "text" --highlight --min-entropy 3.5
+
+Less sensitive (only obvious issues):
+   python flow.py "text" --highlight --min-entropy 5.0
+
+Faster analysis (use base model):
+   python flow.py "text" --highlight --model roberta-base
+
+More accurate (use large model):
+   python flow.py "text" --highlight --model roberta-large
+
+
+TYPICAL WORKFLOW:
+================================================================================
+
+1. Copy your paragraph
+2. Run: python flow.py "paste here" --highlight
+3. Review the highlighted words and suggestions
+4. Manually edit your text based on the suggestions (with ✓ marks)
+5. Done!
+
+
+WHAT TO LOOK FOR:
+================================================================================
+
+✓ Look for the ✓ checkmark - these suggestions pass all quality checks
+✓ High ΔLL values (+3 or higher) = significant fluency improvement
+✓ High sim values (0.95+) = meaning is preserved
+✓ Multiple suggestions with ✓ = strong agreement that word needs changing
+
+
+QUICK TIPS:
+================================================================================
+
+• Start with default settings (they're well-tuned)
+• Trust suggestions with ✓ marks
+• Use roberta-base for speed, roberta-large for accuracy
+• You always have final control - it only suggests, you decide
+• If nothing is highlighted, your text is already good!
+
+
+TROUBLESHOOTING:
+================================================================================
+
+Too many words highlighted?
+   -> Increase threshold: --min-entropy 5.0
+
+Nothing highlighted but you want to check?
+   -> Decrease threshold: --min-entropy 3.5
+
+Running slow?
+   -> Use faster model: --model roberta-base
+
+Want to see more suggestions?
+   -> Use: --highlight-suggestions 5
+
+
+FOR MORE HELP:
+================================================================================
+
+Quick start:        See QUICKSTART.md
+Detailed guide:     See HIGHLIGHT_GUIDE.md
+Usage examples:     See USAGE_EXAMPLES.md
+Full docs:          See README.md
+Command help:       python flow.py --help
+
+
+THAT'S IT! 🎉
+================================================================================
+
+You now have exactly what you asked for - a simple copy-paste workflow
+that highlights places most likely to need editing!
+

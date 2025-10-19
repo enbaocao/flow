@@ -74,6 +74,30 @@ source activate.sh
 
 ## 📖 Usage
 
+### Highlight Mode (Quick Analysis) 🆕
+
+The fastest way to identify words that need editing:
+
+```bash
+# Highlight mode - shows words most likely to need editing
+python flow.py "The utilize of technology is becoming more prevalent." --highlight
+
+# Or use the dedicated script
+python highlight.py "The utilize of technology is becoming more prevalent."
+
+# Show more replacement suggestions per word
+python flow.py "Your text" --highlight --highlight-suggestions 5
+
+# Process a file
+python flow.py --file input.txt --highlight
+```
+
+**Highlight mode output:**
+- 📝 Marks each word that likely needs editing
+- Shows entropy (uncertainty), rank, and log-probability scores
+- Provides top 3 replacement suggestions with fluency gain (ΔLL) and similarity metrics
+- ✓ indicates replacements that pass all quality thresholds
+
 ### Command Line Interface
 
 ```bash
@@ -138,8 +162,12 @@ config = FlowConfig(
 # Initialize pipeline
 pipeline = RefinementPipeline(config)
 
-# Refine text
+# Highlight mode - identify words that need editing
 text = "The utilize of technology is becoming more prevalent."
+pipeline.highlight_clunky_words(text, show_top_replacements=3)
+# Shows: 'utilize' with top replacement suggestions and metrics
+
+# Or refine text (apply edits)
 refined = pipeline.refine_text(text)
 print(refined)
 # Output: "The use of technology is becoming more prevalent."
