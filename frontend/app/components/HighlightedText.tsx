@@ -193,7 +193,7 @@ export default function HighlightedText({
           <span 
             className="cursor-pointer transition-all px-1"
             style={{ 
-              backgroundColor: 'rgba(208, 255, 99, 0.3)',
+              backgroundColor: 'rgba(240, 255, 105, 0.5)',
               borderRadius: '2px'
             }}
           >
