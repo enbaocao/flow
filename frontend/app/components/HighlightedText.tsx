@@ -147,6 +147,7 @@ export default function HighlightedText({
       return (
         <div className="space-y-8">
           <div className="whitespace-pre-wrap" style={{ 
+            fontFamily: "'EB Garamond', serif",
             fontSize: '17px',
             lineHeight: '1.8',
             color: '#1a1a1a'
@@ -219,7 +220,7 @@ export default function HighlightedText({
   return (
     <div className="p-16 min-h-[600px]">
       <div className="whitespace-pre-wrap overflow-visible" style={{ 
-        fontFamily: "'Libre Baskerville', serif", 
+        fontFamily: "'EB Garamond', serif", 
         fontSize: '17px',
         lineHeight: '1.8',
         color: '#1a1a1a'

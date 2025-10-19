@@ -28,149 +28,170 @@ export default function Controls({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="relative">
       <button
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        className="text-[11px] font-light transition-colors"
+        style={{ color: '#666' }}
+        onMouseEnter={(e) => e.currentTarget.style.color = '#1a1a1a'}
+        onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
       >
-        <div className="flex items-center space-x-2">
-          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-          </svg>
-          <span className="text-sm font-medium text-gray-900">Analysis Settings</span>
-          {!showAdvanced && (
-            <span className="text-xs text-gray-500 ml-2">
-              (Entropy: {minEntropy}, Rank: {maxRank}, Suggestions: {topSuggestions})
-            </span>
-          )}
-        </div>
-        <svg
-          className={`w-5 h-5 text-gray-400 transition-transform ${showAdvanced ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        Settings
       </button>
 
       {showAdvanced && (
-        <div className="px-4 pb-4 pt-2 border-t border-gray-200 space-y-4">
-          {/* Sensitivity Presets */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sensitivity Presets
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => {
-                  setMinEntropy(5.0);
-                  setMaxRank(20);
-                }}
-                className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition-colors"
-              >
-                Conservative
-                <span className="block text-gray-500 text-[10px] mt-0.5">Only obvious issues</span>
-              </button>
-              <button
-                onClick={resetToDefaults}
-                className="px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-300 rounded hover:bg-indigo-100 transition-colors"
-              >
-                Balanced
-                <span className="block text-indigo-500 text-[10px] mt-0.5">Recommended</span>
-              </button>
-              <button
-                onClick={() => {
-                  setMinEntropy(3.5);
-                  setMaxRank(100);
-                }}
-                className="px-3 py-2 text-xs font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded hover:bg-gray-200 transition-colors"
-              >
-                Aggressive
-                <span className="block text-gray-500 text-[10px] mt-0.5">Catch more issues</span>
-              </button>
+        <div 
+          className="absolute top-full right-0 mt-2 w-80 bg-white p-6 shadow-xl"
+          style={{ border: '1px solid #e0e0e0' }}
+        >
+          <div className="space-y-6">
+            {/* Presets */}
+            <div>
+              <div className="text-[10px] font-light tracking-wide uppercase mb-3" style={{ color: '#999' }}>
+                Presets
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => {
+                    setMinEntropy(5.0);
+                    setMaxRank(20);
+                  }}
+                  className="py-2 text-[11px] font-light border transition-colors"
+                  style={{ borderColor: '#e0e0e0', color: '#666' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f9f9f9';
+                    e.currentTarget.style.color = '#1a1a1a';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.color = '#666';
+                  }}
+                >
+                  Conservative
+                </button>
+                <button
+                  onClick={resetToDefaults}
+                  className="py-2 text-[11px] font-normal border transition-colors"
+                  style={{ borderColor: '#1a1a1a', color: '#1a1a1a', backgroundColor: '#f9f9f9' }}
+                >
+                  Balanced
+                </button>
+                <button
+                  onClick={() => {
+                    setMinEntropy(3.5);
+                    setMaxRank(100);
+                  }}
+                  className="py-2 text-[11px] font-light border transition-colors"
+                  style={{ borderColor: '#e0e0e0', color: '#666' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#f9f9f9';
+                    e.currentTarget.style.color = '#1a1a1a';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'white';
+                    e.currentTarget.style.color = '#666';
+                  }}
+                >
+                  Aggressive
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Min Entropy Slider */}
-          <div>
-            <label htmlFor="entropy-slider" className="block text-sm font-medium text-gray-700 mb-2">
-              Minimum Entropy Threshold: {minEntropy.toFixed(1)} bits
-            </label>
-            <div className="flex items-center space-x-3">
-              <span className="text-xs text-gray-500">3.0</span>
+            {/* Entropy */}
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-[10px] font-light tracking-wide uppercase" style={{ color: '#999' }}>
+                  Entropy Threshold
+                </span>
+                <span className="text-[11px] font-normal" style={{ color: '#1a1a1a' }}>
+                  {minEntropy.toFixed(1)}
+                </span>
+              </div>
               <input
-                id="entropy-slider"
                 type="range"
                 min="3.0"
                 max="6.0"
                 step="0.1"
                 value={minEntropy}
                 onChange={(e) => setMinEntropy(parseFloat(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                className="w-full h-px appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #1a1a1a 0%, #1a1a1a ${((minEntropy - 3.0) / 3.0) * 100}%, #e0e0e0 ${((minEntropy - 3.0) / 3.0) * 100}%, #e0e0e0 100%)`
+                }}
               />
-              <span className="text-xs text-gray-500">6.0</span>
+              <div className="flex justify-between mt-1">
+                <span className="text-[9px] font-light" style={{ color: '#ccc' }}>3.0</span>
+                <span className="text-[9px] font-light" style={{ color: '#ccc' }}>6.0</span>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Higher = only flag very uncertain words
-            </p>
-          </div>
 
-          {/* Max Rank Slider */}
-          <div>
-            <label htmlFor="rank-slider" className="block text-sm font-medium text-gray-700 mb-2">
-              Maximum Original Rank: #{maxRank}
-            </label>
-            <div className="flex items-center space-x-3">
-              <span className="text-xs text-gray-500">10</span>
+            {/* Rank */}
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-[10px] font-light tracking-wide uppercase" style={{ color: '#999' }}>
+                  Max Rank
+                </span>
+                <span className="text-[11px] font-normal" style={{ color: '#1a1a1a' }}>
+                  #{maxRank}
+                </span>
+              </div>
               <input
-                id="rank-slider"
                 type="range"
                 min="10"
                 max="200"
                 step="10"
                 value={maxRank}
                 onChange={(e) => setMaxRank(parseInt(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                className="w-full h-px appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #1a1a1a 0%, #1a1a1a ${((maxRank - 10) / 190) * 100}%, #e0e0e0 ${((maxRank - 10) / 190) * 100}%, #e0e0e0 100%)`
+                }}
               />
-              <span className="text-xs text-gray-500">200</span>
+              <div className="flex justify-between mt-1">
+                <span className="text-[9px] font-light" style={{ color: '#ccc' }}>10</span>
+                <span className="text-[9px] font-light" style={{ color: '#ccc' }}>200</span>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Lower = only flag words with low probability rank
-            </p>
-          </div>
 
-          {/* Top Suggestions */}
-          <div>
-            <label htmlFor="suggestions-slider" className="block text-sm font-medium text-gray-700 mb-2">
-              Suggestions per Word: {topSuggestions}
-            </label>
-            <div className="flex items-center space-x-3">
-              <span className="text-xs text-gray-500">1</span>
+            {/* Suggestions */}
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-[10px] font-light tracking-wide uppercase" style={{ color: '#999' }}>
+                  Suggestions
+                </span>
+                <span className="text-[11px] font-normal" style={{ color: '#1a1a1a' }}>
+                  {topSuggestions}
+                </span>
+              </div>
               <input
-                id="suggestions-slider"
                 type="range"
                 min="1"
                 max="5"
                 step="1"
                 value={topSuggestions}
                 onChange={(e) => setTopSuggestions(parseInt(e.target.value))}
-                className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                className="w-full h-px appearance-none cursor-pointer"
+                style={{
+                  background: `linear-gradient(to right, #1a1a1a 0%, #1a1a1a ${((topSuggestions - 1) / 4) * 100}%, #e0e0e0 ${((topSuggestions - 1) / 4) * 100}%, #e0e0e0 100%)`
+                }}
               />
-              <span className="text-xs text-gray-500">5</span>
+              <div className="flex justify-between mt-1">
+                <span className="text-[9px] font-light" style={{ color: '#ccc' }}>1</span>
+                <span className="text-[9px] font-light" style={{ color: '#ccc' }}>5</span>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              Number of replacement suggestions to show
-            </p>
-          </div>
 
-          {/* Reset Button */}
-          <button
-            onClick={resetToDefaults}
-            className="w-full px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-300 rounded hover:bg-gray-100 transition-colors"
-          >
-            Reset to Defaults
-          </button>
+            {/* Reset */}
+            <button
+              onClick={resetToDefaults}
+              className="w-full pt-4 mt-2 text-[10px] font-light border-t transition-colors"
+              style={{ borderColor: '#e8e8e8', color: '#999' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#1a1a1a'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#999'}
+            >
+              Reset to defaults
+            </button>
+          </div>
         </div>
       )}
     </div>

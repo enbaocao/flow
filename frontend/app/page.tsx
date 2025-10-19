@@ -161,7 +161,7 @@ export default function Home() {
               placeholder="Type or paste text"
               className="w-full min-h-[600px] p-16 resize-none leading-loose border-none focus:outline-none"
               style={{ 
-                fontFamily: "'Libre Baskerville', serif",
+                fontFamily: "'EB Garamond', serif",
                 fontSize: '17px',
                 backgroundColor: 'white',
                 color: '#1a1a1a',
