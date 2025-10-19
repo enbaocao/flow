@@ -107,58 +107,61 @@ export default function Home() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#F7F5F2' }}>
       <main className="max-w-4xl mx-auto px-12 py-20">
-        {/* Minimal Header */}
-        <div className="mb-20">
-          <h1 className="text-xs font-normal tracking-[0.3em] uppercase mb-3" style={{ color: '#1a1a1a', letterSpacing: '0.3em' }}>Flow</h1>
-          <div className="w-16 h-[1px]" style={{ backgroundColor: '#1a1a1a' }}></div>
-        </div>
-
-        {/* Controls - Floating Top Right */}
-        <div className="fixed top-10 right-12 z-10 flex items-center space-x-4">
-          <div className="text-[11px] font-light" style={{ color: '#999' }}>
-            {text.trim() ? text.trim().split(/\s+/).length : 0} words
+        {/* Header with mirrored layout */}
+        <div className="mb-20 flex items-start justify-between">
+          {/* Left side - Flow title */}
+          <div>
+            <h1 className="text-xs font-normal tracking-[0.3em] uppercase mb-3" style={{ color: '#1a1a1a', letterSpacing: '0.3em' }}>Flow</h1>
+            <div className="w-16 h-[1px]" style={{ backgroundColor: '#1a1a1a' }}></div>
           </div>
           
-          {!hasAnalyzed ? (
-            <button
-              onClick={analyzeText}
-              disabled={loading || !text.trim()}
-              className="px-8 py-2.5 text-[11px] font-normal tracking-[0.15em] uppercase transition-all relative overflow-hidden"
-              style={{ 
-                backgroundColor: '#1a1a1a',
-                color: '#fff',
-                opacity: loading || !text.trim() ? 0.3 : 1
-              }}
-            >
-              {loading && (
-                <span 
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20"
-                  style={{ animation: 'shimmer 1.5s infinite' }}
-                />
-              )}
-              <span className="relative">{loading ? 'Analyzing' : 'Analyze'}</span>
-            </button>
-          ) : (
-            <button
-              onClick={clearAll}
-              className="px-8 py-2.5 text-[11px] font-normal tracking-[0.15em] uppercase transition-all"
-              style={{ 
-                backgroundColor: '#1a1a1a',
-                color: '#fff'
-              }}
-            >
-              Reset
-            </button>
-          )}
-          
-          <Controls
-            minEntropy={minEntropy}
-            setMinEntropy={setMinEntropy}
-            maxRank={maxRank}
-            setMaxRank={setMaxRank}
-            topSuggestions={topSuggestions}
-            setTopSuggestions={setTopSuggestions}
-          />
+          {/* Right side - Controls */}
+          <div className="flex items-center space-x-4">
+            <div className="text-[11px] font-light" style={{ color: '#999' }}>
+              {text.trim() ? text.trim().split(/\s+/).length : 0} words
+            </div>
+            
+            {!hasAnalyzed ? (
+              <button
+                onClick={analyzeText}
+                disabled={loading || !text.trim()}
+                className="px-8 py-2.5 text-[11px] font-normal tracking-[0.15em] uppercase transition-all relative overflow-hidden"
+                style={{ 
+                  backgroundColor: '#1a1a1a',
+                  color: '#fff',
+                  opacity: loading || !text.trim() ? 0.3 : 1
+                }}
+              >
+                {loading && (
+                  <span 
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20"
+                    style={{ animation: 'shimmer 1.5s infinite' }}
+                  />
+                )}
+                <span className="relative">{loading ? 'Analyzing' : 'Analyze'}</span>
+              </button>
+            ) : (
+              <button
+                onClick={clearAll}
+                className="px-8 py-2.5 text-[11px] font-normal tracking-[0.15em] uppercase transition-all"
+                style={{ 
+                  backgroundColor: '#1a1a1a',
+                  color: '#fff'
+                }}
+              >
+                Reset
+              </button>
+            )}
+            
+            <Controls
+              minEntropy={minEntropy}
+              setMinEntropy={setMinEntropy}
+              maxRank={maxRank}
+              setMaxRank={setMaxRank}
+              topSuggestions={topSuggestions}
+              setTopSuggestions={setTopSuggestions}
+            />
+          </div>
         </div>
 
         {/* Error */}
@@ -168,27 +171,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Progress Indicator - Always rendered to prevent layout shift */}
-        <div className="mb-6" style={{ height: '1px' }}>
-          {loading && (
-            <div className="relative">
-              {/* Progress bar */}
-              <div className="overflow-hidden" style={{ height: '1px', backgroundColor: '#e8e8e8' }}>
-                <div 
-                  className="h-full transition-all duration-300"
-                  style={{ 
-                    backgroundColor: '#1a1a1a',
-                    width: `${progress.progress * 100}%`
-                  }}
-                />
-              </div>
-              {/* Progress text */}
-              <div className="absolute left-0 top-2 text-[10px] font-light" style={{ color: '#999' }}>
-                {progress.message}
-              </div>
-            </div>
-          )}
-        </div>
 
         {/* Editor - Pure Minimalism */}
         <div className="bg-white" style={{ border: '1px solid #e0e0e0' }}>
