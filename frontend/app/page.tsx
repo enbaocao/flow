@@ -70,36 +70,85 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Flow Highlight
-            </h1>
-            <p className="text-sm text-gray-600 mt-1">
-              AI-powered text analysis to identify words that need editing
-            </p>
-          </div>
+    <div className="min-h-screen" style={{ backgroundColor: '#F7F5F2' }}>
+      <main className="max-w-4xl mx-auto px-12 py-20">
+        {/* Minimal Header */}
+        <div className="mb-20">
+          <h1 className="text-xs font-normal tracking-[0.3em] uppercase mb-3" style={{ color: '#1a1a1a', letterSpacing: '0.3em' }}>Flow</h1>
+          <div className="w-16 h-[1px]" style={{ backgroundColor: '#1a1a1a' }}></div>
         </div>
-      </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Controls */}
-        <Controls
-          minEntropy={minEntropy}
-          setMinEntropy={setMinEntropy}
-          maxRank={maxRank}
-          setMaxRank={setMaxRank}
-          topSuggestions={topSuggestions}
-          setTopSuggestions={setTopSuggestions}
-        />
+        {/* Controls - Floating Top Right */}
+        <div className="fixed top-10 right-12 z-10 flex items-center space-x-4">
+          <div className="text-[11px] font-light" style={{ color: '#999' }}>
+            {text.trim() ? text.trim().split(/\s+/).length : 0} words
+          </div>
+          <button
+            onClick={analyzeText}
+            disabled={loading || !text.trim()}
+            className="px-8 py-2.5 text-[11px] font-normal tracking-[0.15em] uppercase transition-all relative overflow-hidden"
+            style={{ 
+              backgroundColor: '#1a1a1a',
+              color: '#fff',
+              opacity: loading || !text.trim() ? 0.3 : 1
+            }}
+          >
+            {loading && (
+              <span 
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20"
+                style={{ animation: 'shimmer 1.5s infinite' }}
+              />
+            )}
+            <span className="relative">{loading ? 'Analyzing' : 'Analyze'}</span>
+          </button>
+          {hasAnalyzed && (
+            <button
+              onClick={clearAll}
+              className="text-[11px] font-light transition-colors"
+              style={{ color: '#666' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#1a1a1a'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+            >
+              Clear
+            </button>
+          )}
+          <Controls
+            minEntropy={minEntropy}
+            setMinEntropy={setMinEntropy}
+            maxRank={maxRank}
+            setMaxRank={setMaxRank}
+            topSuggestions={topSuggestions}
+            setTopSuggestions={setTopSuggestions}
+          />
+        </div>
 
-        {/* Main Content - Single Unified Box */}
-        <div className="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
-          {/* Input Section */}
-          <div className="p-6 border-b border-gray-200">
+        {/* Error */}
+        {error && (
+          <div className="mb-8 p-4 border-l-2 border-black">
+            <p className="text-xs text-gray-700">{error}</p>
+          </div>
+        )}
+
+        {/* Progress Indicator - Always rendered to prevent layout shift */}
+        <div className="mb-6 overflow-hidden" style={{ 
+          height: '1px', 
+          backgroundColor: loading ? '#e8e8e8' : 'transparent'
+        }}>
+          {loading && (
+            <div 
+              className="h-full"
+              style={{ 
+                backgroundColor: '#1a1a1a',
+                animation: 'progress 2s ease-in-out infinite',
+                width: '30%'
+              }}
+            />
+          )}
+        </div>
+
+        {/* Editor - Pure Minimalism */}
+        <div className="bg-white" style={{ border: '1px solid #e0e0e0' }}>
+          {!hasAnalyzed ? (
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -109,102 +158,34 @@ export default function Home() {
                   analyzeText();
                 }
               }}
-              placeholder="Type or paste your text here...
-
-Example: 'The utilize of advanced technology has revolutionized the way we communicate.'"
-              className="w-full h-48 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm"
+              placeholder="Type or paste text"
+              className="w-full min-h-[600px] p-16 resize-none leading-loose border-none focus:outline-none"
+              style={{ 
+                fontFamily: "'Libre Baskerville', serif",
+                fontSize: '17px',
+                backgroundColor: 'white',
+                color: '#1a1a1a',
+                lineHeight: '1.8'
+              }}
               disabled={loading}
             />
-            
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-gray-500">
-                {text.trim() ? text.trim().split(/\s+/).length : 0} words
-              </div>
-              
-              <div className="flex space-x-2">
-                <button
-                  onClick={clearAll}
-                  disabled={loading || !text}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Clear
-                </button>
-                
-                <button
-                  onClick={analyzeText}
-                  disabled={loading || !text.trim()}
-                  className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm hover:shadow-md flex items-center space-x-2"
-                >
-                  {loading ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <span>Analyzing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                      </svg>
-                      <span>Analyze Text</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Error Section */}
-          {error && (
-            <div className="p-6 bg-red-50 border-b border-red-200">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">Error</h3>
-                  <p className="text-sm text-red-700 mt-1">{error}</p>
-                </div>
-              </div>
-            </div>
+          ) : (
+            <HighlightedText
+              originalText={text}
+              highlightedWords={highlightedWords}
+              totalHighlighted={totalHighlighted}
+              hasAnalyzed={hasAnalyzed}
+              loading={loading}
+            />
           )}
-
-          {/* Results Section */}
-          <HighlightedText
-            originalText={text}
-            highlightedWords={highlightedWords}
-            totalHighlighted={totalHighlighted}
-            hasAnalyzed={hasAnalyzed}
-            loading={loading}
-          />
         </div>
 
-        {/* Legend */}
-        <div className="mt-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-200 p-6">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">Understanding the metrics</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-            <div>
-              <span className="font-medium text-gray-900">Entropy (H):</span>
-              <p className="text-gray-600">Higher = more uncertain word choice</p>
-            </div>
-            <div>
-              <span className="font-medium text-gray-900">Rank:</span>
-              <p className="text-gray-600">Position in probability distribution</p>
-            </div>
-            <div>
-              <span className="font-medium text-gray-900">ΔLL:</span>
-              <p className="text-gray-600">Fluency improvement (higher = better)</p>
-            </div>
-            <div>
-              <span className="font-medium text-gray-900">sim:</span>
-              <p className="text-gray-600">Semantic similarity (closer to 1 = preserved meaning)</p>
-            </div>
+        {/* Minimal Status */}
+        {hasAnalyzed && totalHighlighted > 0 && (
+          <div className="mt-6 text-[11px] font-light" style={{ color: '#999' }}>
+            {totalHighlighted} highlighted · hover to view
           </div>
-        </div>
+        )}
       </main>
     </div>
   );

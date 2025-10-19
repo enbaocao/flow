@@ -1,5 +1,12 @@
 import type { Metadata } from 'next';
+import { Libre_Baskerville } from 'next/font/google';
 import './globals.css';
+
+const libreBaskerville = Libre_Baskerville({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  variable: '--font-libre-baskerville',
+});
 
 export const metadata: Metadata = {
   title: 'Flow Highlight - AI Text Analysis',
@@ -13,7 +20,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">
+      <body className={`${libreBaskerville.variable} antialiased`}>
         {children}
       </body>
     </html>
