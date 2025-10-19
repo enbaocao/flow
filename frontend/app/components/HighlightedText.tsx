@@ -191,10 +191,10 @@ export default function HighlightedText({
           onMouseLeave={() => setHoveredWord(null)}
         >
           <span 
-            className="cursor-pointer transition-all"
+            className="cursor-pointer transition-all px-1"
             style={{ 
-              borderBottom: '1.5px solid #1a1a1a',
-              paddingBottom: '1px'
+              backgroundColor: 'rgba(208, 255, 99, 0.3)',
+              borderRadius: '2px'
             }}
           >
             {word.word}

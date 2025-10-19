@@ -13,6 +13,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [totalHighlighted, setTotalHighlighted] = useState(0);
   const [hasAnalyzed, setHasAnalyzed] = useState(false);
+  const [progress, setProgress] = useState({ stage: '', progress: 0, message: '' });
   
   // Configuration
   const [minEntropy, setMinEntropy] = useState(4.0);
@@ -29,9 +30,10 @@ export default function Home() {
     setError(null);
     setHighlightedWords([]);
     setHasAnalyzed(false);
+    setProgress({ stage: '', progress: 0, message: '' });
 
     try {
-      const response = await fetch('http://localhost:8000/api/highlight', {
+      const response = await fetch('http://localhost:8000/api/highlight-stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,18 +47,50 @@ export default function Home() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to analyze text');
+        const errorText = await response.text();
+        throw new Error(`API error: ${errorText || response.statusText}`);
       }
 
-      const data = await response.json();
-      setHighlightedWords(data.highlighted_words);
-      setTotalHighlighted(data.total_highlighted);
-      setHasAnalyzed(true);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response body');
+      }
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+            
+            if (data.type === 'result') {
+              // Final result
+              setHighlightedWords(data.data.highlighted_words);
+              setTotalHighlighted(data.data.total_highlighted);
+              setHasAnalyzed(true);
+              setLoading(false);
+            } else if (data.type === 'error') {
+              throw new Error(data.message);
+            } else {
+              // Progress update
+              setProgress({
+                stage: data.stage,
+                progress: data.progress,
+                message: data.message
+              });
+            }
+          }
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
       console.error('Error analyzing text:', err);
-    } finally {
       setLoading(false);
     }
   };
@@ -67,6 +101,7 @@ export default function Home() {
     setError(null);
     setTotalHighlighted(0);
     setHasAnalyzed(false);
+    setProgress({ stage: '', progress: 0, message: '' });
   };
 
   return (
@@ -83,35 +118,39 @@ export default function Home() {
           <div className="text-[11px] font-light" style={{ color: '#999' }}>
             {text.trim() ? text.trim().split(/\s+/).length : 0} words
           </div>
-          <button
-            onClick={analyzeText}
-            disabled={loading || !text.trim()}
-            className="px-8 py-2.5 text-[11px] font-normal tracking-[0.15em] uppercase transition-all relative overflow-hidden"
-            style={{ 
-              backgroundColor: '#1a1a1a',
-              color: '#fff',
-              opacity: loading || !text.trim() ? 0.3 : 1
-            }}
-          >
-            {loading && (
-              <span 
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20"
-                style={{ animation: 'shimmer 1.5s infinite' }}
-              />
-            )}
-            <span className="relative">{loading ? 'Analyzing' : 'Analyze'}</span>
-          </button>
-          {hasAnalyzed && (
+          
+          {!hasAnalyzed ? (
+            <button
+              onClick={analyzeText}
+              disabled={loading || !text.trim()}
+              className="px-8 py-2.5 text-[11px] font-normal tracking-[0.15em] uppercase transition-all relative overflow-hidden"
+              style={{ 
+                backgroundColor: '#1a1a1a',
+                color: '#fff',
+                opacity: loading || !text.trim() ? 0.3 : 1
+              }}
+            >
+              {loading && (
+                <span 
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-20"
+                  style={{ animation: 'shimmer 1.5s infinite' }}
+                />
+              )}
+              <span className="relative">{loading ? 'Analyzing' : 'Analyze'}</span>
+            </button>
+          ) : (
             <button
               onClick={clearAll}
-              className="text-[11px] font-light transition-colors"
-              style={{ color: '#666' }}
-              onMouseEnter={(e) => e.currentTarget.style.color = '#1a1a1a'}
-              onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+              className="px-8 py-2.5 text-[11px] font-normal tracking-[0.15em] uppercase transition-all"
+              style={{ 
+                backgroundColor: '#1a1a1a',
+                color: '#fff'
+              }}
             >
-              Clear
+              Reset
             </button>
           )}
+          
           <Controls
             minEntropy={minEntropy}
             setMinEntropy={setMinEntropy}
@@ -130,19 +169,24 @@ export default function Home() {
         )}
 
         {/* Progress Indicator - Always rendered to prevent layout shift */}
-        <div className="mb-6 overflow-hidden" style={{ 
-          height: '1px', 
-          backgroundColor: loading ? '#e8e8e8' : 'transparent'
-        }}>
+        <div className="mb-6" style={{ height: '1px' }}>
           {loading && (
-            <div 
-              className="h-full"
-              style={{ 
-                backgroundColor: '#1a1a1a',
-                animation: 'progress 2s ease-in-out infinite',
-                width: '30%'
-              }}
-            />
+            <div className="relative">
+              {/* Progress bar */}
+              <div className="overflow-hidden" style={{ height: '1px', backgroundColor: '#e8e8e8' }}>
+                <div 
+                  className="h-full transition-all duration-300"
+                  style={{ 
+                    backgroundColor: '#1a1a1a',
+                    width: `${progress.progress * 100}%`
+                  }}
+                />
+              </div>
+              {/* Progress text */}
+              <div className="absolute left-0 top-2 text-[10px] font-light" style={{ color: '#999' }}>
+                {progress.message}
+              </div>
+            </div>
           )}
         </div>
 
@@ -181,10 +225,24 @@ export default function Home() {
           )}
         </div>
 
-        {/* Minimal Status */}
-        {hasAnalyzed && totalHighlighted > 0 && (
-          <div className="mt-6 text-[11px] font-light" style={{ color: '#999' }}>
-            {totalHighlighted} highlighted · hover to view
+        {/* Footer Actions */}
+        {hasAnalyzed && (
+          <div className="mt-8 flex items-center justify-between border-t pt-6" style={{ borderColor: '#e8e8e8' }}>
+            <div className="text-[11px] font-light" style={{ color: '#999' }}>
+              {totalHighlighted > 0 
+                ? `${totalHighlighted} word${totalHighlighted !== 1 ? 's' : ''} highlighted · hover to view`
+                : 'Analysis complete'
+              }
+            </div>
+            <button
+              onClick={clearAll}
+              className="text-[11px] font-light tracking-wide uppercase transition-colors"
+              style={{ color: '#999' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = '#1a1a1a'}
+              onMouseLeave={(e) => e.currentTarget.style.color = '#999'}
+            >
+              Analyze Another →
+            </button>
           </div>
         )}
       </main>

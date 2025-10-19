@@ -6,9 +6,12 @@ Provides REST API for the frontend.
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import uvicorn
+import asyncio
+import json
 
 from config import FlowConfig
 from refinement_pipeline import RefinementPipeline
@@ -88,6 +91,184 @@ async def root():
         "service": "Flow Highlight API",
         "version": "1.0.0"
     }
+
+
+class ProgressUpdate(BaseModel):
+    stage: str
+    progress: float  # 0-1
+    current: int
+    total: int
+    message: str
+
+
+async def send_progress(stage: str, current: int, total: int, message: str):
+    """Helper to create progress update."""
+    return {
+        "stage": stage,
+        "progress": current / total if total > 0 else 0,
+        "current": current,
+        "total": total,
+        "message": message
+    }
+
+
+@app.post("/api/highlight-stream")
+async def highlight_text_stream(request: HighlightRequest):
+    """
+    Highlight text with progress updates via Server-Sent Events.
+    """
+    async def generate():
+        try:
+            # Send initial progress
+            yield f"data: {json.dumps(await send_progress('init', 0, 5, 'Starting analysis'))}\n\n"
+            await asyncio.sleep(0.1)
+            
+            # Split sentences
+            sentences = pipeline._split_sentences(request.text)
+            yield f"data: {json.dumps(await send_progress('split', 1, 5, f'Found {len(sentences)} sentence(s)'))}\n\n"
+            await asyncio.sleep(0.1)
+            
+            highlighted_words = []
+            char_offset = 0
+            total_words_to_check = 0
+            
+            # Count total words to check
+            all_sentence_data = []
+            for sentence in sentences:
+                words = pipeline.constraints.extract_words(sentence)
+                scores = pipeline.scorer.score_sentence(
+                    sentence, words, 
+                    min_entropy=request.min_entropy,
+                    max_rank=request.max_rank
+                )
+                clunky_scores = [
+                    s for s in scores 
+                    if s.is_clunky and s.word_text not in ['.', ',', '!', '?', ';', ':', '"', "'", '(', ')']
+                ]
+                total_words_to_check += len(clunky_scores)
+                all_sentence_data.append((sentence, words, scores, clunky_scores))
+            
+            yield f"data: {json.dumps(await send_progress('scoring', 2, 5, f'Found {total_words_to_check} word(s) to check'))}\n\n"
+            await asyncio.sleep(0.05)
+            
+            # Process sentences with granular progress
+            words_processed = 0
+            char_offset = 0
+            
+            for sentence, words, scores, clunky_scores in all_sentence_data:
+                if clunky_scores:
+                    alignments = pipeline.aligner.align_words_to_tokens(sentence, words)
+                    encoding = pipeline.aligner.tokenizer(sentence, add_special_tokens=True)
+                    input_ids = encoding['input_ids']
+                    
+                    for score in clunky_scores:
+                        words_processed += 1
+                        
+                        # Calculate granular progress (spread across stages 3-4)
+                        base_progress = 2 + (words_processed / total_words_to_check) * 2  # 2.0 to 4.0
+                        
+                        # Send progress for this word
+                        yield f"data: {json.dumps(await send_progress('candidates', int(base_progress), 5, f'Analyzing \"{score.word_text}\" ({words_processed}/{total_words_to_check})'))}\n\n"
+                        
+                        alignment = next((a for a in alignments if a.word_idx == score.word_idx), None)
+                        if not alignment:
+                            continue
+                        
+                        flagged_reasons = []
+                        if score.entropy >= request.min_entropy:
+                            flagged_reasons.append(f"high uncertainty (H≥{request.min_entropy})")
+                        if score.rank >= request.max_rank:
+                            flagged_reasons.append(f"low rank (rank≥{request.max_rank})")
+                        
+                        candidates = pipeline.generator.generate_candidates(
+                            input_ids, alignment, score.word_text
+                        )
+                        
+                        suggestions = []
+                        if candidates:
+                            candidate_texts = [c.text for c in candidates]
+                            filtered_texts = pipeline.constraints.filter_candidates(
+                                score.word_text, candidate_texts, sentence, strict=True
+                            )
+                            filtered_candidates = [c for c in candidates if c.text in filtered_texts]
+                            
+                            # Send update for candidate generation
+                            yield f"data: {json.dumps(await send_progress('candidates', int(base_progress), 5, f'Generating replacements for \"{score.word_text}\"'))}\n\n"
+                            
+                            for cand_idx, cand in enumerate(filtered_candidates[:10], 1):
+                                # Granular progress for each candidate
+                                sub_progress = base_progress + (cand_idx / 10) * 0.1
+                                yield f"data: {json.dumps(await send_progress('evaluating', int(sub_progress), 5, f'Evaluating \"{cand.text}\" for \"{score.word_text}\"'))}\n\n"
+                                
+                                new_text, new_ids = pipeline.aligner.reconstruct_sentence(
+                                    input_ids, cand.text, alignment
+                                )
+                                
+                                original_pll = pipeline.scorer.compute_windowed_pll(
+                                    input_ids, alignment.token_start,
+                                    window_size=pipeline.config.pll_window_size
+                                )
+                                new_pll = pipeline.scorer.compute_windowed_pll(
+                                    new_ids, alignment.token_start,
+                                    window_size=pipeline.config.pll_window_size
+                                )
+                                pll_gain = new_pll - original_pll
+                                
+                                if pll_gain < 0.5:
+                                    continue
+                                
+                                similarity = pipeline.semantic_checker.compute_similarity(
+                                    sentence, new_text
+                                )
+                                passes = (
+                                    pll_gain >= pipeline.config.min_pll_gain and 
+                                    similarity >= pipeline.config.min_sbert_cosine
+                                )
+                                
+                                suggestions.append(Suggestion(
+                                    text=cand.text,
+                                    pll_gain=round(pll_gain, 2),
+                                    similarity=round(similarity, 3),
+                                    log_prob=round(cand.log_prob, 2),
+                                    passes_thresholds=passes,
+                                    rank=cand.rank
+                                ))
+                            
+                            suggestions = suggestions[:request.top_suggestions]
+                        
+                        if suggestions:
+                            word_start = char_offset + alignment.char_start
+                            word_end = char_offset + alignment.char_end
+                            highlighted_words.append(HighlightedWord(
+                                word=score.word_text,
+                                start_pos=word_start,
+                                end_pos=word_end,
+                                entropy=round(score.entropy, 2),
+                                rank=score.rank,
+                                log_prob=round(score.log_prob, 2),
+                                flagged_reasons=flagged_reasons,
+                                suggestions=suggestions
+                            ))
+                
+                char_offset += len(sentence) + 1
+            
+            # Send final progress
+            yield f"data: {json.dumps(await send_progress('complete', 5, 5, 'Analysis complete'))}\n\n"
+            await asyncio.sleep(0.1)
+            
+            # Send final result
+            result = HighlightResponse(
+                original_text=request.text,
+                highlighted_words=highlighted_words,
+                total_highlighted=len(highlighted_words),
+                sentence_count=len(sentences)
+            )
+            yield f"data: {json.dumps({'type': 'result', 'data': result.model_dump()})}\n\n"
+            
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 @app.post("/api/highlight", response_model=HighlightResponse)
@@ -176,65 +357,74 @@ async def highlight_text(request: HighlightRequest):
                         c for c in candidates if c.text in filtered_texts
                     ]
                     
-                    # Evaluate each candidate
-                    for cand in filtered_candidates[:request.top_suggestions]:
-                        # Reconstruct sentence
-                        new_text, new_ids = pipeline.aligner.reconstruct_sentence(
-                            input_ids,
-                            cand.text,
-                            alignment
-                        )
-                        
-                        # Compute PLL gain
-                        original_pll = pipeline.scorer.compute_windowed_pll(
-                            input_ids,
-                            alignment.token_start,
-                            window_size=pipeline.config.pll_window_size
-                        )
-                        
-                        new_pll = pipeline.scorer.compute_windowed_pll(
-                            new_ids,
-                            alignment.token_start,
-                            window_size=pipeline.config.pll_window_size
-                        )
-                        
-                        pll_gain = new_pll - original_pll
-                        
-                        # Compute similarity
-                        similarity = pipeline.semantic_checker.compute_similarity(
-                            sentence,
-                            new_text
-                        )
-                        
-                        # Check if passes thresholds
-                        passes = (
-                            pll_gain >= pipeline.config.min_pll_gain and 
-                            similarity >= pipeline.config.min_sbert_cosine
-                        )
-                        
-                        suggestions.append(Suggestion(
-                            text=cand.text,
-                            pll_gain=round(pll_gain, 2),
-                            similarity=round(similarity, 3),
-                            log_prob=round(cand.log_prob, 2),
-                            passes_thresholds=passes,
-                            rank=cand.rank
-                        ))
+                # Evaluate each candidate
+                for cand in filtered_candidates[:10]:  # Check more candidates, filter later
+                    # Reconstruct sentence
+                    new_text, new_ids = pipeline.aligner.reconstruct_sentence(
+                        input_ids,
+                        cand.text,
+                        alignment
+                    )
+                    
+                    # Compute PLL gain
+                    original_pll = pipeline.scorer.compute_windowed_pll(
+                        input_ids,
+                        alignment.token_start,
+                        window_size=pipeline.config.pll_window_size
+                    )
+                    
+                    new_pll = pipeline.scorer.compute_windowed_pll(
+                        new_ids,
+                        alignment.token_start,
+                        window_size=pipeline.config.pll_window_size
+                    )
+                    
+                    pll_gain = new_pll - original_pll
+                    
+                    # Skip suggestions that decrease fluency
+                    if pll_gain < 0.5:
+                        continue
+                    
+                    # Compute similarity
+                    similarity = pipeline.semantic_checker.compute_similarity(
+                        sentence,
+                        new_text
+                    )
+                    
+                    # Check if passes thresholds
+                    passes = (
+                        pll_gain >= pipeline.config.min_pll_gain and 
+                        similarity >= pipeline.config.min_sbert_cosine
+                    )
+                    
+                    suggestions.append(Suggestion(
+                        text=cand.text,
+                        pll_gain=round(pll_gain, 2),
+                        similarity=round(similarity, 3),
+                        log_prob=round(cand.log_prob, 2),
+                        passes_thresholds=passes,
+                        rank=cand.rank
+                    ))
                 
-                # Calculate absolute position in original text
-                word_start = char_offset + alignment.char_start
-                word_end = char_offset + alignment.char_end
+                # Only keep top N suggestions after filtering
+                suggestions = suggestions[:request.top_suggestions]
                 
-                highlighted_words.append(HighlightedWord(
-                    word=score.word_text,
-                    start_pos=word_start,
-                    end_pos=word_end,
-                    entropy=round(score.entropy, 2),
-                    rank=score.rank,
-                    log_prob=round(score.log_prob, 2),
-                    flagged_reasons=flagged_reasons,
-                    suggestions=suggestions
-                ))
+                # Only highlight words that have viable suggestions
+                if suggestions:
+                    # Calculate absolute position in original text
+                    word_start = char_offset + alignment.char_start
+                    word_end = char_offset + alignment.char_end
+                    
+                    highlighted_words.append(HighlightedWord(
+                        word=score.word_text,
+                        start_pos=word_start,
+                        end_pos=word_end,
+                        entropy=round(score.entropy, 2),
+                        rank=score.rank,
+                        log_prob=round(score.log_prob, 2),
+                        flagged_reasons=flagged_reasons,
+                        suggestions=suggestions
+                    ))
             
             # Update char offset for next sentence
             char_offset += len(sentence) + 1  # +1 for space
