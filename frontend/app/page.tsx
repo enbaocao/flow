@@ -163,6 +163,7 @@ export default function Home() {
               style={{ 
                 fontFamily: "'EB Garamond', serif",
                 fontSize: '17px',
+                fontWeight: 500,
                 backgroundColor: 'white',
                 color: '#1a1a1a',
                 lineHeight: '1.8'
