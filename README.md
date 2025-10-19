@@ -153,10 +153,10 @@ from refinement_pipeline import RefinementPipeline
 
 # Create configuration
 config = FlowConfig(
-    roberta_model="roberta-large",
+    roberta_model="roberta-base",
     min_entropy=4.0,
-    min_pll_gain=1.5,
-    min_sbert_cosine=0.95
+    min_pll_gain=2.0,
+    min_sbert_cosine=0.97
 )
 
 # Initialize pipeline
@@ -183,8 +183,8 @@ min_entropy = 4.0        # bits - flag high-entropy positions
 max_original_rank = 50   # flag if original word ranks poorly
 
 # Re-ranking thresholds  
-min_pll_gain = 1.5       # log-units improvement required
-min_sbert_cosine = 0.95  # semantic similarity threshold
+min_pll_gain = 2.0       # log-units improvement required
+min_sbert_cosine = 0.97  # semantic similarity threshold
 pll_window_size = 5      # tokens ±5 around edit
 
 # Safety limits
@@ -241,11 +241,11 @@ Reason: high uncertainty (H=4.7 bits); improves fluency (+2.1 PLL); preserves me
 
 | Option | Description | Default |
 |--------|-------------|---------|
-| `--model` | RoBERTa model (`roberta-base`/`roberta-large`) | `roberta-large` |
+| `--model` | RoBERTa model (`roberta-base`/`roberta-large`) | `roberta-base` |
 | `--interactive` | Interactive mode with user approval | `False` |
 | `--min-entropy` | Entropy threshold for flagging words | `4.0` |
-| `--min-pll-gain` | PLL improvement required | `1.5` |
-| `--min-similarity` | SBERT similarity threshold | `0.95` |
+| `--min-pll-gain` | PLL improvement required | `2.0` |
+| `--min-similarity` | SBERT similarity threshold | `0.97` |
 | `--use-nli` | Enable NLI entailment checking | `False` |
 | `--max-edits` | Max edits per sentence | `2` |
 | `--device` | Device (`cpu`/`cuda`) | `cpu` |
@@ -256,9 +256,9 @@ Reason: high uncertainty (H=4.7 bits); improves fluency (+2.1 PLL); preserves me
 
 ```python
 config = FlowConfig(
-    roberta_model="roberta-base",  # Faster
-    min_entropy=3.5,               # More aggressive
-    min_pll_gain=1.0,              # More lenient
+    roberta_model="roberta-large",  # Slower but more exhaustive
+    min_entropy=3.5,                 # More aggressive
+    min_pll_gain=1.0,                # More lenient
     use_nli_check=True,            # Extra semantic safety
     max_edits_per_sentence=3       # Allow more edits
 )
@@ -290,7 +290,8 @@ for sentence in sentences:
 - Generates single-token replacements for simplicity (often effective)
 
 ### Speed vs Accuracy Tradeoffs
-- `roberta-base`: ~4× faster than `roberta-large`, slightly less accurate
+- `roberta-base` (default): lightweight and quick for interactive use
+- `roberta-large`: ~4× slower but can surface rarer alternatives
 - Batch multiple positions in one forward pass for efficiency
 - Pre-filter candidates before expensive PLL computation
 

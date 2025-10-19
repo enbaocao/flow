@@ -156,6 +156,11 @@ async def highlight_text_stream(request: HighlightRequest):
             char_offset = 0
             
             for sentence, words, scores, clunky_scores in all_sentence_data:
+                # Find the actual position of this sentence in the original text
+                sentence_start = request.text.find(sentence, char_offset)
+                if sentence_start == -1:
+                    # Fallback to char_offset if not found
+                    sentence_start = char_offset
                 if clunky_scores:
                     alignments = pipeline.aligner.align_words_to_tokens(sentence, words)
                     encoding = pipeline.aligner.tokenizer(sentence, add_special_tokens=True)
@@ -237,8 +242,8 @@ async def highlight_text_stream(request: HighlightRequest):
                             suggestions = suggestions[:request.top_suggestions]
                         
                         if suggestions:
-                            word_start = char_offset + alignment.char_start
-                            word_end = char_offset + alignment.char_end
+                            word_start = sentence_start + alignment.char_start
+                            word_end = sentence_start + alignment.char_end
                             highlighted_words.append(HighlightedWord(
                                 word=score.word_text,
                                 start_pos=word_start,
@@ -250,7 +255,8 @@ async def highlight_text_stream(request: HighlightRequest):
                                 suggestions=suggestions
                             ))
                 
-                char_offset += len(sentence) + 1
+                # Update char_offset to the end of this sentence in the original text
+                char_offset = sentence_start + len(sentence)
             
             # Send final progress
             yield f"data: {json.dumps(await send_progress('complete', 5, 5, 'Analysis complete'))}\n\n"
@@ -293,6 +299,11 @@ async def highlight_text(request: HighlightRequest):
         char_offset = 0
         
         for sentence in sentences:
+            # Find the actual position of this sentence in the original text
+            sentence_start = request.text.find(sentence, char_offset)
+            if sentence_start == -1:
+                # Fallback to char_offset if not found
+                sentence_start = char_offset
             # Extract words
             words = pipeline.constraints.extract_words(sentence)
             
@@ -312,7 +323,7 @@ async def highlight_text(request: HighlightRequest):
             
             if not clunky_scores:
                 # Update char offset for next sentence
-                char_offset += len(sentence) + 1  # +1 for space
+                char_offset = sentence_start + len(sentence)
                 continue
             
             # Get alignments and encoding
@@ -412,8 +423,8 @@ async def highlight_text(request: HighlightRequest):
                 # Only highlight words that have viable suggestions
                 if suggestions:
                     # Calculate absolute position in original text
-                    word_start = char_offset + alignment.char_start
-                    word_end = char_offset + alignment.char_end
+                    word_start = sentence_start + alignment.char_start
+                    word_end = sentence_start + alignment.char_end
                     
                     highlighted_words.append(HighlightedWord(
                         word=score.word_text,
@@ -427,7 +438,7 @@ async def highlight_text(request: HighlightRequest):
                     ))
             
             # Update char offset for next sentence
-            char_offset += len(sentence) + 1  # +1 for space
+            char_offset = sentence_start + len(sentence)
         
         return HighlightResponse(
             original_text=request.text,

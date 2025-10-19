@@ -32,8 +32,8 @@ Examples:
   # Show more replacement suggestions in highlight mode
   python flow.py "Your text" --highlight --highlight-suggestions 5
   
-  # Use smaller/faster model
-  python flow.py "Your text" --model roberta-base --highlight
+    # Use larger model for maximum accuracy
+    python flow.py "Your text" --model roberta-large --highlight
   
   # Adjust thresholds
   python flow.py "Your text" --min-entropy 3.5 --min-pll-gain 1.0 --highlight
@@ -65,9 +65,9 @@ Examples:
     # Model selection
     parser.add_argument(
         "--model",
-        default="roberta-large",
+    default="roberta-base",
         choices=["roberta-base", "roberta-large"],
-        help="RoBERTa model to use (default: roberta-large)"
+    help="RoBERTa model to use (default: roberta-base)"
     )
     
     parser.add_argument(
@@ -95,15 +95,15 @@ Examples:
     parser.add_argument(
         "--min-pll-gain",
         type=float,
-        default=1.5,
-        help="Minimum PLL gain required for accepting edits (default: 1.5)"
+    default=2.0,
+    help="Minimum PLL gain required for accepting edits (default: 2.0)"
     )
     
     parser.add_argument(
         "--min-similarity",
         type=float,
-        default=0.95,
-        help="Minimum SBERT similarity required (default: 0.95)"
+    default=0.97,
+    help="Minimum SBERT similarity required (default: 0.97)"
     )
     
     parser.add_argument(

@@ -9,7 +9,7 @@ class FlowConfig:
     """Configuration for text refinement thresholds and model settings."""
     
     # Model selection
-    roberta_model: str = "roberta-large"  # or "roberta-base" for speed
+    roberta_model: str = "roberta-base"  # switch to base by default for lighter runtime
     sbert_model: str = "all-MiniLM-L6-v2"  # fast and effective
     nli_model: Optional[str] = "roberta-large-mnli"  # optional NLI check
     spacy_model: str = "en_core_web_sm"
@@ -19,12 +19,12 @@ class FlowConfig:
     max_original_rank: int = 50  # flag if original word ranks poorly
     
     # Re-ranking thresholds
-    min_pll_gain: float = 1.5  # log-units improvement required
-    min_sbert_cosine: float = 0.95  # semantic similarity threshold
-    pll_window_size: int = 5  # tokens ±5 around edit
+    min_pll_gain: float = 2.0  # require stronger fluency gain
+    min_sbert_cosine: float = 0.97  # tighter semantic preservation threshold
+    pll_window_size: int = 3  # tokens ±3 around edit (reduced for speed)
     
     # Candidate generation
-    top_k_candidates: int = 20  # candidates to consider per position
+    top_k_candidates: int = 10  # candidates to consider per position (reduced for speed)
     max_edits_per_sentence: int = 2  # conservative edit budget
     
     # Processing options

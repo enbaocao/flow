@@ -241,7 +241,7 @@ class RefinementPipeline:
         best_similarity = 0.0
         alternatives = []
         
-        for candidate in candidates[:10]:  # Limit to top 10 for efficiency
+        for candidate in candidates[:5]:  # Limit to top 5 for speed
             # Reconstruct sentence with candidate
             new_text, new_ids = self.aligner.reconstruct_sentence(
                 input_ids,

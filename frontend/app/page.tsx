@@ -207,6 +207,14 @@ export default function Home() {
           )}
         </div>
 
+        {/* Description */}
+        {!hasAnalyzed && (
+          <div className="mt-6 text-[11px] font-light leading-relaxed" style={{ color: '#999' }}>
+            Flow analyzes your text using the RoBERTa family of language models to identify words that could be improved. 
+            Simply hover over highlighted words to see better alternatives.
+          </div>
+        )}
+
         {/* Footer Actions */}
         {hasAnalyzed && (
           <div className="mt-8 flex items-center justify-between border-t pt-6" style={{ borderColor: '#e8e8e8' }}>
