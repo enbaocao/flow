@@ -4,6 +4,8 @@
 
 we use roberta's bidirectional mlm to find awkward words in the middles of sentences and find more fluid alternatives.
 
+![Flow Demo](./frontend/public/demo.png)
+
 ---
 
 ## CLI Usage
