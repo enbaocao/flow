@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { HighlightedWord } from '../types';
 
 interface HighlightedTextProps {
@@ -165,7 +165,7 @@ export default function HighlightedText({
       );
     }
 
-    const parts: JSX.Element[] = [];
+    const parts: React.ReactElement[] = [];
     let lastIndex = 0;
 
     // Sort highlighted words by position
