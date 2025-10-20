@@ -3,8 +3,8 @@
 Test the highlight mode functionality.
 """
 
-from config import FlowConfig
-from refinement_pipeline import RefinementPipeline
+from .config import FlowConfig
+from .refinement_pipeline import RefinementPipeline
 
 
 def test_highlight_mode():
