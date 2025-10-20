@@ -9,8 +9,8 @@ import argparse
 import sys
 from typing import Optional
 
-from config import FlowConfig
-from refinement_pipeline import RefinementPipeline
+from .config import FlowConfig
+from .refinement_pipeline import RefinementPipeline
 
 
 def main():

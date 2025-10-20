@@ -5,10 +5,10 @@ This is a simple smoke test to verify the system works.
 """
 
 import sys
-from config import FlowConfig
-from tokenizer_utils import TokenizerAligner
-from scorer import BidirectionalScorer
-from linguistic_constraints import LinguisticConstraints
+from .config import FlowConfig
+from .tokenizer_utils import TokenizerAligner
+from .scorer import BidirectionalScorer
+from .linguistic_constraints import LinguisticConstraints
 
 
 def test_tokenizer():

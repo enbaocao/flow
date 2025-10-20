@@ -6,10 +6,30 @@ we use roberta's bidirectional mlm to find awkward words in the middles of sente
 
 ---
 
+## CLI Usage
+
+```bash
+# Clone and setup
+git clone https://github.com/enbaocao/flow.git
+cd flow
+source scripts/activate.sh
+
+# Highlight problematic words
+python -m backend.flow "The utilize of technology is becoming more prevalent." --highlight
+
+# Apply automatic edits
+python -m backend.flow "Your text here" --apply-edits
+
+# Interactive mode (approve each edit)
+python -m backend.flow "Your text here" --interactive
+```
+
+---
+
 ### Web Interface
 
 ```bash
-./start.sh
+./scripts/start.sh
 ```
 
 ---

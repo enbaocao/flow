@@ -13,8 +13,8 @@ import uvicorn
 import asyncio
 import json
 
-from config import FlowConfig
-from refinement_pipeline import RefinementPipeline
+from .config import FlowConfig
+from .refinement_pipeline import RefinementPipeline
 
 # Initialize FastAPI app
 app = FastAPI(title="Flow Highlight API", version="1.0.0")

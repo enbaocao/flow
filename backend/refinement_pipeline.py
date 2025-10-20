@@ -4,15 +4,15 @@ from typing import List, Dict, Tuple, Optional, TYPE_CHECKING
 from dataclasses import dataclass
 import re
 
-from config import FlowConfig
-from scorer import BidirectionalScorer, WordScore
-from candidate_generator import CandidateGenerator, Candidate
-from semantic_checker import SemanticChecker
-from linguistic_constraints import LinguisticConstraints
-from tokenizer_utils import TokenizerAligner
+from .config import FlowConfig
+from .scorer import BidirectionalScorer, WordScore
+from .candidate_generator import CandidateGenerator, Candidate
+from .semantic_checker import SemanticChecker
+from .linguistic_constraints import LinguisticConstraints
+from .tokenizer_utils import TokenizerAligner
 
 if TYPE_CHECKING:
-    from tokenizer_utils import WordAlignment
+    from .tokenizer_utils import WordAlignment
 
 
 @dataclass

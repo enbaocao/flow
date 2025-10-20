@@ -5,9 +5,11 @@ Highlight Mode - Quick text analysis to identify words that need editing.
 This is a simplified interface to Flow's highlight functionality for quick checks.
 """
 
+import argparse
 import sys
-from config import FlowConfig
-from refinement_pipeline import RefinementPipeline
+
+from .config import FlowConfig
+from .refinement_pipeline import RefinementPipeline
 
 
 def main():

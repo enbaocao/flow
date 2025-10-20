@@ -5,8 +5,8 @@ import torch.nn.functional as F
 from typing import List, Dict, Tuple
 from dataclasses import dataclass
 
-from tokenizer_utils import TokenizerAligner, WordAlignment
-from scorer import BidirectionalScorer
+from .tokenizer_utils import TokenizerAligner, WordAlignment
+from .scorer import BidirectionalScorer
 
 
 @dataclass

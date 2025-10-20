@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import numpy as np
 from transformers import AutoModelForMaskedLM, AutoTokenizer
 
-from tokenizer_utils import TokenizerAligner, WordAlignment
+from .tokenizer_utils import TokenizerAligner, WordAlignment
 
 
 @dataclass

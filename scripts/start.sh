@@ -25,7 +25,7 @@ fi
 # Start API server in background
 echo "🚀 Starting API server (port 8000)..."
 source venv/bin/activate
-python api_server.py > api_server.log 2>&1 &
+python backend/api_server.py > api_server.log 2>&1 &
 API_PID=$!
 
 # Save PID for cleanup
