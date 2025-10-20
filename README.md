@@ -1,151 +1,211 @@
-# Flow - Bidirectional Text Refinement using RoBERTa
+<div align="center">
 
-Flow is a sophisticated text refinement system that uses RoBERTa's bidirectional context understanding to identify and improve "clunky" words in sentences while preserving semantic meaning and linguistic correctness.
+# 🌊 Flow
 
-## 🧠 Core Concept
+### AI-Powered Text Refinement Using RoBERTa
 
-Flow scores each word by masking its subword span and measuring RoBERTa's surprise (entropy) at the original token. High-entropy positions indicate "clunky" words that can be improved. The system then:
+*Identify and improve clunky words while preserving meaning*
 
-1. **Scores** words using bidirectional masked language modeling
-2. **Generates** candidates from RoBERTa's fill-mask distribution  
-3. **Filters** candidates using linguistic constraints (POS, morphology)
-4. **Re-ranks** candidates by local fluency improvement (PLL gain)
-5. **Validates** semantic preservation using Sentence-BERT similarity
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
 
-## 🏗️ Architecture
+[Quick Start](#-quick-start) • [Demo](#-demo) • [How It Works](#-how-it-works) • [API](#-python-api)
 
-- **Tokenizer + Aligner**: Maps between characters, words, and subword pieces
-- **Bidirectional Scorer**: Computes entropy and pseudo-log-likelihood (PLL) 
-- **Candidate Generator**: Generates replacements from masked predictions
-- **Semantic Checker**: Ensures meaning preservation via SBERT + optional NLI
-- **Linguistic Constraints**: Enforces POS/morphology agreement via spaCy
-- **Refinement Pipeline**: Orchestrates greedy left-to-right editing
+</div>
 
-## 🚀 Installation
+---
 
-### Option 1: Using uv (Recommended - Fast!)
+## 🎯 What is Flow?
+
+Flow uses **RoBERTa's bidirectional masked language modeling** to identify awkward or "clunky" words in your text and suggest natural-sounding alternatives. Unlike traditional grammar checkers, Flow understands context and preserves your intended meaning.
+
+## ✨ Key Features
+
+- 🎯 **Smart Word Scoring** - Uses entropy and probability ranking to flag problematic words
+- 🔄 **Context-Aware Replacements** - Generates alternatives that fit naturally in context
+- 🛡️ **Meaning Preservation** - Ensures semantic similarity with Sentence-BERT
+- 📊 **Transparent Metrics** - See fluency gains (ΔLL) and similarity scores for every suggestion
+- ⚡ **Fast & Lightweight** - Uses `roberta-base` by default for quick responses
+- 🎨 **Web Interface** - Beautiful Next.js frontend for interactive text refinement
+
+---
+
+## 🚀 Quick Start
+
+### CLI Usage
 
 ```bash
-# Clone the repository
-git clone <your-repo-url>
+# Clone and setup
+git clone https://github.com/enbaocao/flow.git
 cd flow
+source activate.sh
 
-# Create virtual environment with uv
+# Highlight problematic words
+python flow.py "The utilize of technology is becoming more prevalent." --highlight
+
+# Apply automatic edits
+python flow.py "Your text here" --apply-edits
+
+# Interactive mode (approve each edit)
+python flow.py "Your text here" --interactive
+```
+
+### Web Interface
+
+```bash
+# Start the full-stack app (API + Frontend)
+./start.sh
+```
+
+Then open **http://localhost:3000** in your browser.
+
+---
+
+## 📦 Installation
+
+<details>
+<summary><b>Using uv (Recommended)</b></summary>
+
+```bash
+# Create virtual environment
 uv venv venv
-
-# Activate and install dependencies
 source venv/bin/activate
+
+# Install dependencies
 uv pip install -r requirements.txt
 
 # Install spaCy model
 uv pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
-
-# Test installation
-python test_basic.py
 ```
 
-### Option 2: Using pip
+</details>
+
+<details>
+<summary><b>Using pip</b></summary>
 
 ```bash
-# Clone the repository
-git clone <your-repo-url>
-cd flow
-
 # Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-
-# Download spaCy model
 python -m spacy download en_core_web_sm
-
-# Test installation
-python test_basic.py
 ```
 
-### Quick Start Script
+</details>
 
-```bash
-# Use the activation helper
-source activate.sh
+---
+
+## 💡 Demo
+
+### Input
 ```
+The utilize of advanced algorithms has revolutionized data processing.
+```
+
+### Highlight Mode Output
+```
+📝 'utilize'
+   Entropy: 5.60 bits | Rank: #8131 | Log-prob: -16.83
+   
+   Top replacements:
+   ✓ 1. use            → ΔLL= +7.87 | sim=0.962 | p= -1.34
+     2. adoption       → ΔLL= +4.23 | sim=0.945 | p= -2.10
+     3. implementation → ΔLL= +2.15 | sim=0.931 | p= -3.45
+
+✓ = passes fluency & similarity thresholds
+```
+
+### Refined Output
+```
+The use of advanced algorithms has revolutionized data processing.
+```
+
+---
+
+## 🧠 Core Concept
+
+Flow scores each word by masking it and measuring RoBERTa's uncertainty. High entropy = clunky word. The pipeline then:
+
+1. 🎯 **Scores** words using bidirectional masked language modeling
+2. 🔮 **Generates** candidates from RoBERTa's fill-mask predictions
+3. 🔍 **Filters** using linguistic constraints (POS, morphology)
+4. 📈 **Re-ranks** by fluency improvement (PLL gain)
+5. ✅ **Validates** semantic preservation with Sentence-BERT
+
+<details>
+<summary><b>Architecture Overview</b></summary>
+
+- **Tokenizer + Aligner** - Maps characters ↔ words ↔ subword tokens
+- **Bidirectional Scorer** - Computes entropy & pseudo-log-likelihood (PLL)
+- **Candidate Generator** - Generates replacements from masked predictions
+- **Semantic Checker** - SBERT similarity + optional NLI entailment
+- **Linguistic Constraints** - POS/morphology agreement via spaCy
+- **Refinement Pipeline** - Greedy left-to-right editing orchestration
+
+</details>
+
+---
 
 ## 📖 Usage
 
-### Highlight Mode (Quick Analysis) 🆕
+### 🎨 Highlight Mode (Recommended)
 
-The fastest way to identify words that need editing:
+Quickly identify problematic words without making changes:
 
 ```bash
-# Highlight mode - shows words most likely to need editing
+# Basic highlight
 python flow.py "The utilize of technology is becoming more prevalent." --highlight
 
-# Or use the dedicated script
-python highlight.py "The utilize of technology is becoming more prevalent."
-
-# Show more replacement suggestions per word
+# Show more suggestions per word
 python flow.py "Your text" --highlight --highlight-suggestions 5
 
 # Process a file
 python flow.py --file input.txt --highlight
 ```
 
-**Highlight mode output:**
-- 📝 Marks each word that likely needs editing
-- Shows entropy (uncertainty), rank, and log-probability scores
-- Provides top 3 replacement suggestions with fluency gain (ΔLL) and similarity metrics
-- ✓ indicates replacements that pass all quality thresholds
+**Output includes:**
+- 📝 Flagged words with entropy, rank, and log-probability
+- Top N replacement suggestions ranked by fluency
+- ΔLL (fluency gain) and similarity scores
+- ✓ indicates candidates passing quality thresholds
 
-### Command Line Interface
+### ⚙️ Edit Mode
+
+Apply automatic refinements:
 
 ```bash
-# Basic usage - shows top 5 candidates for each word (default behavior)
-python flow.py "Thank you for your attention to this matter"
+# Auto-apply best edits
+python flow.py "Your text here" --apply-edits
 
-# Apply edits automatically instead of showing candidates
-python flow.py "Your text" --apply-edits
-
-# Show more or fewer candidates
-python flow.py "Your text" --show-candidates 10
-
-# Interactive mode (confirm each edit)
+# Interactive approval
 python flow.py "Your text here" --interactive
 
-# Use faster model
-python flow.py "Your text" --model roberta-base
-
-# Adjust sensitivity
-python flow.py "Your text" --min-entropy 3.5 --min-pll-gain 1.0
-
-# Enable NLI checking for extra semantic safety
-python flow.py "Your text" --use-nli
-
-# Process file
-python flow.py --file input.txt --output refined.txt
+# Process file and save output
+python flow.py --file input.txt --output refined.txt --apply-edits
 ```
 
-### Understanding the Output
+### 🛠️ Advanced Options
 
-By default, Flow shows the **top 5 candidate replacements** for each word with:
-- **Entropy** (H): How uncertain RoBERTa is about this position (higher = more "clunky")
-- **Rank**: Where the original word ranks in RoBERTa's predictions
-- **ΔLL** (Delta Log-Likelihood): Fluency improvement (positive = better, negative = worse)
-- **sim**: Semantic similarity with original sentence (0-1, higher = more similar)
-- **p**: Log probability of the candidate in masked position
-- **✓**: Indicates candidate passes both fluency (ΔLL ≥ threshold) and similarity (sim ≥ threshold) checks
+```bash
+# Use larger model for better accuracy
+python flow.py "text" --model roberta-large --highlight
 
-Example output:
-```
-📝 'utilize'
-   Entropy: 5.60 bits | Rank: #8131 | Log-prob: -16.83
-   Top replacements:
-   ✓ 1. adoption       → ΔLL= +7.87 | sim=0.962 | p= -1.34
-     2. use            → ΔLL= -2.10 | sim=0.924 | p= -2.76
+# Adjust sensitivity (lower = more aggressive)
+python flow.py "text" --min-entropy 3.5 --min-pll-gain 1.0
+
+# Enable NLI for stricter semantic checking
+python flow.py "text" --use-nli --apply-edits
+
+# Show candidate analysis (default behavior)
+python flow.py "text" --show-candidates 10
 ```
 
-### Python API
+---
+
+## 🐍 Python API
 
 ```python
 from config import FlowConfig
