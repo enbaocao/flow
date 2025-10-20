@@ -11,6 +11,12 @@ Beautiful Next.js + Tailwind CSS frontend for the Flow text highlighting system.
 - ✅ **Quality Indicators** - Green checkmarks show high-quality suggestions
 - 📱 **Responsive** - Works on desktop, tablet, and mobile
 
+## Demo
+
+![Flow Highlight Demo](./public/demo.png)
+
+*Flow in action: highlighting words that could be improved with AI-powered suggestions*
+
 ## Quick Start
 
 ### 1. Install Dependencies
