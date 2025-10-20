@@ -1,0 +1,10 @@
+#!/bin/bash
+# Wrapper script for running Flow CLI from root directory
+
+# Activate virtual environment if it exists
+if [ -d "venv" ]; then
+    source venv/bin/activate
+fi
+
+# Run flow CLI with all arguments passed through
+python -m backend.flow "$@"

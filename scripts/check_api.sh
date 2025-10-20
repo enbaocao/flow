@@ -15,6 +15,6 @@ else
     echo ""
     echo "Please start the API server:"
     echo "  source venv/bin/activate"
-    echo "  python backend/api_server.py"
+    echo "  python -m backend.api_server"
 fi
 

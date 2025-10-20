@@ -15,13 +15,13 @@ cd flow
 source scripts/activate.sh
 
 # Highlight problematic words
-python -m backend.flow "The utilize of technology is becoming more prevalent." --highlight
+./flow "The utilize of technology is becoming more prevalent." --highlight
 
 # Apply automatic edits
-python -m backend.flow "Your text here" --apply-edits
+./flow "Your text here" --apply-edits
 
-# Interactive mode (approve each edit)
-python -m backend.flow "Your text here" --interactive
+# Interactive mode
+./flow "Your text here" --interactive
 ```
 
 ---

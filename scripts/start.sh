@@ -3,6 +3,14 @@
 # Flow Highlight - Startup Script
 # This script starts both the API server and frontend
 
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Get the project root (parent of scripts/)
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
+
+# Change to project root
+cd "$PROJECT_ROOT"
+
 echo "╔══════════════════════════════════════════════════════════════╗"
 echo "║         Flow Highlight - Starting Servers                    ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
@@ -24,8 +32,8 @@ fi
 
 # Start API server in background
 echo "🚀 Starting API server (port 8000)..."
-source venv/bin/activate
-python backend/api_server.py > api_server.log 2>&1 &
+source "$PROJECT_ROOT/venv/bin/activate"
+python -m backend.api_server > api_server.log 2>&1 &
 API_PID=$!
 
 # Save PID for cleanup
