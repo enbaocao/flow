@@ -462,8 +462,15 @@ async def health_check():
 
 
 if __name__ == "__main__":
+    import os
+    
+    # Get port from environment variable (for cloud deployment)
+    port = int(os.environ.get("PORT", 8000))
+    host = os.environ.get("HOST", "0.0.0.0")
+    
     print("Starting Flow Highlight API Server...")
-    print("Server will be available at: http://localhost:8000")
-    print("API documentation at: http://localhost:8000/docs")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    print(f"Server will be available at: http://{host}:{port}")
+    print(f"API documentation at: http://{host}:{port}/docs")
+    
+    uvicorn.run(app, host=host, port=port)
 

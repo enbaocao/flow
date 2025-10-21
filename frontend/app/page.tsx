@@ -33,7 +33,8 @@ export default function Home() {
     setProgress({ stage: '', progress: 0, message: '' });
 
     try {
-      const response = await fetch('http://localhost:8000/api/highlight-stream', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const response = await fetch(`${apiUrl}/api/highlight-stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

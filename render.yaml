@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: flow-api
+    env: python
+    buildCommand: "pip install -r backend/requirements-api.txt"
+    startCommand: "python -m backend.api_server"
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
